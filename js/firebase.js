@@ -5,13 +5,13 @@
 
 // ⚠️ 아래 설정값은 Firebase 콘솔에서 복사해서 채워주세요
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyCFb3pzlriZ7cso6HtdDBj6-mKR__XzcFQ",
-  authDomain:        "hongyeon-62c8d.firebaseapp.com",
-  databaseURL:       "https://hongyeon-62c8d-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:         "hongyeon-62c8d",
-  storageBucket:     "hongyeon-62c8d.firebasestorage.app",
-  messagingSenderId: "62447517337",
-  appId:             "1:62447517337:web:9c9541b22ed7ced2958208",
+  apiKey:            "여기에_API_KEY_입력",
+  authDomain:        "여기에_AUTH_DOMAIN_입력",
+  databaseURL:       "여기에_DATABASE_URL_입력",
+  projectId:         "여기에_PROJECT_ID_입력",
+  storageBucket:     "여기에_STORAGE_BUCKET_입력",
+  messagingSenderId: "여기에_MESSAGING_SENDER_ID_입력",
+  appId:             "여기에_APP_ID_입력",
 };
 
 // Firebase 초기화 (index.html에서 SDK 로드 후 사용)
