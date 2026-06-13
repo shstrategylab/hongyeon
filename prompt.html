@@ -106,15 +106,7 @@
     let currentTopic = "general";
     let result, input;
 
-    // 주제별 추가 지시문
-    const TOPIC_EXTRA = {
-      general:   "",
-      money:     "\n\n## 특별 요청\n재물운과 투자 타이밍에 집중하여 구체적 조언을 해주세요.",
-      career:    "\n\n## 특별 요청\n직장·사업·승진 관련 운세와 최적의 행동 시기를 알려주세요.",
-      health:    "\n\n## 특별 요청\n건강 관련 주의사항과 건강 회복에 좋은 방위·시기를 알려주세요.",
-      love:      "\n\n## 특별 요청\n인간관계·애정운을 중심으로, 좋은 인연을 만나는 방위와 시기를 알려주세요.",
-      direction: "\n\n## 특별 요청\n이사·여행에 가장 길한 방위 TOP 3와 피해야 할 방위를 구체적으로 알려주세요.",
-    };
+    // 주제별 지시문은 engine.js buildAiPrompt() 내부에서 처리
 
     window.addEventListener("load", () => {
       result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
@@ -129,7 +121,7 @@
     });
 
     function renderPrompt() {
-      const prompt = buildAiPrompt(result, input) + TOPIC_EXTRA[currentTopic];
+      const prompt = buildAiPrompt(result, input, currentTopic);
       document.getElementById("promptBox").textContent = prompt;
     }
 

@@ -1,14 +1,51 @@
 {
   "rules": {
+
+    // ── 기본 차단 (명시된 경로 외 전부 거부) ─────────
+    ".read": false,
+    ".write": false,
+
     "users": {
       "$uid": {
-        ".read": "auth == null || auth.uid == $uid",
+
+        // 본인 데이터만 읽기/쓰기 가능
+        // (현재는 로그인 없이 로컬스토리지 UID 사용 → auth==null 허용)
+        ".read":  "auth == null || auth.uid == $uid",
         ".write": "auth == null || auth.uid == $uid",
+
+        // ── 사주 데이터 ───────────────────────────────
         "saju": {
-          ".validate": "newData.hasChildren(['year','month','day','hour'])"
+          ".validate": "newData.hasChildren(['year','month','day','hour'])
+                        && newData.child('year').isNumber()
+                        && newData.child('month').isNumber()
+                        && newData.child('day').isNumber()
+                        && newData.child('hour').isNumber()
+                        && newData.child('year').val() >= 1900
+                        && newData.child('year').val() <= 2100
+                        && newData.child('month').val() >= 1
+                        && newData.child('month').val() <= 12
+                        && newData.child('day').val() >= 1
+                        && newData.child('day').val() <= 31
+                        && newData.child('hour').val() >= 0
+                        && newData.child('hour').val() <= 23"
         },
+
+        // ── 결제·프리미엄 상태 ────────────────────────
         "premium": {
-          ".validate": "newData.hasChildren(['isPaid'])"
+          // isPaid 값은 클라이언트가 직접 true로 못 바꾸게 서버(함수)에서만 쓰도록
+          // 현재 PG 미연동 상태이므로 우선 쓰기 허용, 연동 후 아래 주석 해제
+          ".validate": "newData.hasChildren(['isPaid'])
+                        && newData.child('isPaid').isBoolean()",
+          // ⚠️ PG 연동 후 아래로 교체:
+          // ".write": false  // Cloud Functions에서만 기록
+        },
+
+        // ── 포국 히스토리 ─────────────────────────────
+        "history": {
+          "$entry": {
+            ".validate": "newData.hasChildren(['createdAt'])
+                          && newData.child('createdAt').isNumber()"
+          }
         }
       }
     }
