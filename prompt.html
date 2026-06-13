@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍연 마스터 — AI 심층풀이 프롬프트</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">洪烟 마스터</span>
+    <span class="logo-sub">AI 심층풀이 프롬프트 생성</span>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav-bar">
+      <a href="index.html"   class="nav-item">포국 입력</a>
+      <a href="result.html"  class="nav-item">구궁도 결과</a>
+      <a href="premium.html" class="nav-item">심층 풀이</a>
+      <a href="prompt.html"  class="nav-item active">AI 프롬프트</a>
+    </nav>
+
+    <div class="card">
+      <div class="card-title">사용 방법</div>
+      <ol style="font-size: 13px; color: var(--text-muted); line-height: 2.2; padding-left: 18px;">
+        <li>아래 생성된 프롬프트를 <strong style="color: var(--text-main);">복사</strong>합니다.</li>
+        <li><a href="https://claude.ai" target="_blank" style="color: var(--gold);">Claude.ai</a> 또는 ChatGPT 대화창을 엽니다.</li>
+        <li>복사한 프롬프트를 붙여넣고 전송합니다.</li>
+        <li>AI가 포국 데이터를 기반으로 심층 해석을 제공합니다.</li>
+      </ol>
+    </div>
+
+    <!-- 주제 선택 -->
+    <div class="card">
+      <div class="card-title">풀이 주제 선택</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;" id="topicButtons">
+        <button class="topic-btn active" data-topic="general">전체 운세</button>
+        <button class="topic-btn" data-topic="money">재물운</button>
+        <button class="topic-btn" data-topic="career">직장·사업운</button>
+        <button class="topic-btn" data-topic="health">건강운</button>
+        <button class="topic-btn" data-topic="love">인간관계·애정운</button>
+        <button class="topic-btn" data-topic="direction">길한 방위·이사</button>
+      </div>
+
+      <style>
+        .topic-btn {
+          background: var(--bg-panel);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-family: 'Noto Sans KR', sans-serif;
+          font-size: 12px;
+          padding: 6px 14px;
+          transition: all 0.2s;
+        }
+        .topic-btn:hover, .topic-btn.active {
+          border-color: var(--border-glow);
+          color: var(--gold);
+          background: rgba(180, 140, 80, 0.08);
+        }
+      </style>
+
+      <div class="prompt-box" id="promptBox">포국 데이터를 불러오는 중...</div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-copy" id="copyBtn" onclick="copyPrompt()">
+          📋 프롬프트 복사
+        </button>
+        <button class="btn btn-copy" onclick="regenerate()">
+          🔄 다시 생성
+        </button>
+      </div>
+    </div>
+
+    <!-- 팁 -->
+    <div class="card" style="border-color: rgba(180,140,80,0.15);">
+      <div class="card-title">💡 더 좋은 풀이를 받으려면</div>
+      <ul style="font-size: 12px; color: var(--text-muted); line-height: 2.2; padding-left: 16px;">
+        <li>AI에게 <strong style="color: var(--text-main);">"홍연기문 전문가처럼"</strong> 답해달라고 추가 요청하세요.</li>
+        <li>구체적인 상황(취업 준비, 이사 계획 등)을 프롬프트 뒤에 덧붙이면 더 정확합니다.</li>
+        <li>만세력으로 정확한 사주팔자를 확인 후 입력하면 품질이 높아집니다.</li>
+      </ul>
+    </div>
+
+    <div style="padding-bottom: 32px;"></div>
+
+  </main>
+
+  <!-- 토스트 -->
+  <div class="toast" id="toast">프롬프트가 복사되었습니다 ✓</div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="js/data-jeolgi.js"></script>
+  <script src="js/data-ganji.js"></script>
+  <script src="js/data-gugung.js"></script>
+  <script src="js/data-yukhin.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/firebase.js"></script>
+
+  <script>
+    let currentTopic = "general";
+    let result, input;
+
+    // 주제별 추가 지시문
+    const TOPIC_EXTRA = {
+      general:   "",
+      money:     "\n\n## 특별 요청\n재물운과 투자 타이밍에 집중하여 구체적 조언을 해주세요.",
+      career:    "\n\n## 특별 요청\n직장·사업·승진 관련 운세와 최적의 행동 시기를 알려주세요.",
+      health:    "\n\n## 특별 요청\n건강 관련 주의사항과 건강 회복에 좋은 방위·시기를 알려주세요.",
+      love:      "\n\n## 특별 요청\n인간관계·애정운을 중심으로, 좋은 인연을 만나는 방위와 시기를 알려주세요.",
+      direction: "\n\n## 특별 요청\n이사·여행에 가장 길한 방위 TOP 3와 피해야 할 방위를 구체적으로 알려주세요.",
+    };
+
+    window.addEventListener("load", () => {
+      result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
+      input  = JSON.parse(sessionStorage.getItem("hongyeon_input")  || "null");
+
+      if (!result || !input) {
+        document.getElementById("promptBox").textContent =
+          "포국 데이터가 없습니다. 먼저 입력 페이지에서 사주를 입력해주세요.";
+        return;
+      }
+      renderPrompt();
+    });
+
+    function renderPrompt() {
+      const prompt = buildAiPrompt(result, input) + TOPIC_EXTRA[currentTopic];
+      document.getElementById("promptBox").textContent = prompt;
+    }
+
+    function regenerate() { renderPrompt(); }
+
+    // 주제 버튼
+    document.querySelectorAll(".topic-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentTopic = btn.dataset.topic;
+        renderPrompt();
+      });
+    });
+
+    // 복사
+    function copyPrompt() {
+      const text = document.getElementById("promptBox").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth == null || auth.uid == $uid",
+        ".write": "auth == null || auth.uid == $uid",
+        "saju": {
+          ".validate": "newData.hasChildren(['year','month','day','hour'])"
+        },
+        "premium": {
+          ".validate": "newData.hasChildren(['isPaid'])"
+        }
+      }
+    }
+  }
+}

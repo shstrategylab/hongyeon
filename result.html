@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍연 마스터 — 구궁도 결과</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .meta-tag {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .meta-tag span { color: var(--gold); }
+
+    .gung-detail {
+      display: none;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .gung-detail.active { display: block; }
+    .gung-detail-title {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 15px;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .gung-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--text-muted);
+    }
+    .gung-detail-row:last-child { border-bottom: none; }
+    .gung-detail-row strong { color: var(--text-main); }
+
+    .summary-list { list-style: none; }
+    .summary-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+    .summary-list li:last-child { border-bottom: none; }
+    .summary-rank {
+      font-family: 'Noto Serif KR', serif;
+      color: var(--gold);
+      font-size: 15px;
+      min-width: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">洪烟 마스터</span>
+    <span class="logo-sub">구궁도 포국 결과</span>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav-bar">
+      <a href="index.html"   class="nav-item">포국 입력</a>
+      <a href="result.html"  class="nav-item active">구궁도 결과</a>
+      <a href="premium.html" class="nav-item">심층 풀이</a>
+      <a href="prompt.html"  class="nav-item">AI 프롬프트</a>
+    </nav>
+
+    <!-- 메타 정보 -->
+    <div class="meta-bar" id="metaBar">
+      <div class="meta-tag">절기: <span id="jeolgiName">-</span></div>
+      <div class="meta-tag">구분: <span id="dunType">-</span></div>
+      <div class="meta-tag">국수: <span id="baseGuksu">-</span>국</div>
+      <div class="meta-tag">지반수: <span id="jibansu">-</span></div>
+      <div class="meta-tag">천반수: <span id="cheonbansu">-</span></div>
+    </div>
+
+    <!-- 구궁도 -->
+    <div class="card">
+      <div class="card-title">구궁도 (세궁: <span id="segungLabel" class="text-gold">-</span>)</div>
+      <div class="gugung-grid" id="gugungGrid"></div>
+
+      <!-- 클릭 시 상세 표시 -->
+      <div class="gung-detail" id="gungDetail">
+        <div class="gung-detail-title" id="detailTitle">—</div>
+        <div class="gung-detail-row">
+          <span>방위</span><strong id="detailDir">-</strong>
+        </div>
+        <div class="gung-detail-row">
+          <span>오행</span><strong id="detailOhaeng">-</strong>
+        </div>
+        <div class="gung-detail-row">
+          <span>지반수</span><strong id="detailJiban">-</strong>
+        </div>
+        <div class="gung-detail-row">
+          <span>천반수</span><strong id="detailCheon">-</strong>
+        </div>
+        <div class="gung-detail-row">
+          <span>관계</span><strong id="detailRelation">-</strong>
+        </div>
+        <div class="gung-detail-row">
+          <span>운세 점수</span><strong id="detailScore">-</strong>
+        </div>
+        <p class="mt-8 text-sm" style="color: var(--text-muted);" id="detailDesc">-</p>
+      </div>
+    </div>
+
+    <!-- 길흉 요약 -->
+    <div class="card">
+      <div class="card-title">길흉 요약</div>
+      <ul class="summary-list" id="summaryList"></ul>
+    </div>
+
+    <!-- 이동 버튼 -->
+    <div style="display: flex; gap: 10px; margin-bottom: 32px;">
+      <a href="premium.html" class="btn btn-secondary" style="text-decoration: none;">
+        🔒 심층 풀이 보기
+      </a>
+      <a href="prompt.html" class="btn btn-secondary" style="text-decoration: none;">
+        ✦ AI 프롬프트 생성
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="js/data-jeolgi.js"></script>
+  <script src="js/data-ganji.js"></script>
+  <script src="js/data-gugung.js"></script>
+  <script src="js/data-yukhin.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/firebase.js"></script>
+
+  <script>
+    // 저장된 결과 불러오기
+    const result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
+
+    if (!result) {
+      alert("입력 데이터가 없습니다. 처음부터 시작해주세요.");
+      window.location.href = "index.html";
+    } else {
+      renderResult(result);
+    }
+
+    function renderResult(r) {
+      const { meta, analysis, board } = r;
+
+      // 메타 정보
+      document.getElementById("jeolgiName").textContent  = meta.jeolgiName;
+      document.getElementById("dunType").textContent     = meta.type;
+      document.getElementById("baseGuksu").textContent   = meta.baseGuksu;
+      document.getElementById("jibansu").textContent     = analysis.jibansu;
+      document.getElementById("cheonbansu").textContent  = analysis.cheonbansu;
+      document.getElementById("segungLabel").textContent =
+        `${analysis.segungIndex}번 ${analysis.segungName}`;
+
+      // 구궁도 그리드 렌더링
+      // CSS Grid 전통 방위 순서: [4,9,2 / 3,5,7 / 8,1,6]
+      const gridOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
+      const grid = document.getElementById("gugungGrid");
+      grid.innerHTML = "";
+
+      gridOrder.forEach(gungNum => {
+        const g = board[gungNum];
+        if (!g) return;
+
+        const rel = g.relation;
+        const isSegung = gungNum === analysis.segungIndex;
+        const scoreClass =
+          rel.score >= 80 ? "high" :
+          rel.score >= 40 ? "mid" : "low";
+
+        const cell = document.createElement("div");
+        cell.className = "gung-cell" + (isSegung ? " is-segung" : "");
+        cell.dataset.gungNum = gungNum;
+        cell.innerHTML = `
+          <span class="score-badge badge-${rel.badge}">${rel.badge}</span>
+          <span class="gung-name">${g.gungInfo.direction}</span>
+          <span class="gung-num">${g.jibansu}</span>
+          <span class="gung-cheonban">天 ${g.cheonbansu}</span>
+          <div class="score-bar-wrap" style="width:100%; margin-top:4px;">
+            <div class="score-bar ${scoreClass}" style="width:${rel.score}%"></div>
+          </div>
+        `;
+
+        cell.addEventListener("click", () => showDetail(g, isSegung));
+        grid.appendChild(cell);
+      });
+
+      // 길흉 요약 (점수 내림차순)
+      const sorted = Object.values(board).sort((a, b) => b.relation.score - a.relation.score);
+      const list = document.getElementById("summaryList");
+      list.innerHTML = "";
+      sorted.forEach((g, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span class="summary-rank">${i + 1}</span>
+          <div>
+            <strong style="font-size:13px">${g.gungInfo.name}</strong>
+            <span class="text-muted" style="margin-left:8px; font-size:11px">${g.gungInfo.direction}</span>
+            <span class="score-badge badge-${g.relation.badge}" style="margin-left:4px; position:static;">${g.relation.badge}</span>
+            <br>
+            <span class="text-sm text-muted">${g.relation.desc}</span>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function showDetail(g, isSegung) {
+      const detail = document.getElementById("gungDetail");
+      detail.classList.add("active");
+
+      document.getElementById("detailTitle").textContent =
+        g.gungInfo.name + (isSegung ? " ★ 세궁(나의 방)" : "");
+      document.getElementById("detailDir").textContent     = g.gungInfo.direction;
+      document.getElementById("detailOhaeng").textContent  = g.gungInfo.ohaeng;
+      document.getElementById("detailJiban").textContent   = g.jibansu;
+      document.getElementById("detailCheon").textContent   = g.cheonbansu;
+      document.getElementById("detailRelation").textContent = g.relation.label;
+      document.getElementById("detailScore").textContent   = g.relation.score + "점";
+      document.getElementById("detailDesc").textContent    = g.relation.desc;
+
+      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  </script>
+
+</body>
+</html>

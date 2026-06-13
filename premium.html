@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍연 마스터 — 심층 풀이</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .fortune-area {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .fortune-area:last-child { border-bottom: none; }
+    .fortune-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .fortune-title {
+      font-size: 14px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fortune-icon { font-size: 18px; }
+    .paywall-blur {
+      filter: blur(5px);
+      pointer-events: none;
+      user-select: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .unlock-section {
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius);
+      margin: 20px 0;
+    }
+    .unlock-section .price {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 28px;
+      color: var(--gold);
+      margin: 12px 0 4px;
+    }
+    .unlock-section .price-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .free-badge {
+      display: inline-block;
+      background: rgba(74, 140, 92, 0.15);
+      border: 1px solid rgba(74, 140, 92, 0.3);
+      border-radius: 4px;
+      color: #6dbf87;
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+    .premium-badge {
+      display: inline-block;
+      background: rgba(180, 140, 80, 0.15);
+      border: 1px solid var(--border-glow);
+      border-radius: 4px;
+      color: var(--gold);
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">洪烟 마스터</span>
+    <span class="logo-sub">십신·육친 심층 풀이</span>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav-bar">
+      <a href="index.html"   class="nav-item">포국 입력</a>
+      <a href="result.html"  class="nav-item">구궁도 결과</a>
+      <a href="premium.html" class="nav-item active">심층 풀이</a>
+      <a href="prompt.html"  class="nav-item">AI 프롬프트</a>
+    </nav>
+
+    <!-- 무료 미리보기 -->
+    <div class="card">
+      <div class="card-title">
+        나의 방(세궁) 기본 풀이 <span class="free-badge">무료</span>
+      </div>
+      <div id="freeContent">
+        <p style="color: var(--text-muted); font-size: 13px;">포국 데이터를 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- 잠금 해제 유도 -->
+    <div class="unlock-section" id="unlockSection">
+      <p style="font-size: 13px; color: var(--text-muted);">
+        나머지 8개 방의 <strong style="color: var(--text-main);">재물·직장·건강·인간관계</strong> 심층 풀이
+      </p>
+      <div class="price">₩9,900</div>
+      <div class="price-sub">1회 결제 · 평생 열람</div>
+      <button class="btn btn-primary" style="max-width: 280px; margin: 0 auto;"
+        onclick="handlePayment()">
+        🔓 지금 잠금 해제하기
+      </button>
+      <p style="font-size: 11px; color: var(--text-dim); margin-top: 12px;">
+        첫 가입 시 재물운 방 1개 무료 열람권 제공
+      </p>
+    </div>
+
+    <!-- 유료 콘텐츠 (결제 후 표시) -->
+    <div class="card" id="premiumCard" style="display: none;">
+      <div class="card-title">
+        십신·육친 전체 풀이 <span class="premium-badge">프리미엄</span>
+      </div>
+      <div id="premiumContent"></div>
+    </div>
+
+    <!-- 흐릿한 미리보기 -->
+    <div class="card" id="blurPreview">
+      <div class="card-title">풀이 미리보기</div>
+      <div class="paywall-blur">
+        당신의 동쪽 진궁(震宮)은 편재(큰돈) 방입니다. 현재 천생지(90점) 구조로
+        하늘이 재물을 밀어주는 형국입니다. 이번 달 투자나 사업 확장의 타이밍이
+        열려 있습니다. 서쪽 태궁(兌宮)은 직장·명예 관련 정관 방으로...
+      </div>
+    </div>
+
+    <div style="padding-bottom: 32px;"></div>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="js/data-jeolgi.js"></script>
+  <script src="js/data-ganji.js"></script>
+  <script src="js/data-gugung.js"></script>
+  <script src="js/data-yukhin.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/firebase.js"></script>
+
+  <script>
+    let result, isPaid = false;
+
+    window.addEventListener("load", async () => {
+      result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
+      if (!result) {
+        document.getElementById("freeContent").innerHTML =
+          `<p style="color:var(--text-muted); font-size:13px;">
+            포국 데이터가 없습니다. <a href="index.html" style="color:var(--gold)">처음부터 시작</a>하세요.
+          </p>`;
+        return;
+      }
+
+      renderFreeContent();
+
+      // 결제 상태 확인
+      isPaid = await checkPremiumStatus();
+      if (isPaid) showPremium();
+    });
+
+    function renderFreeContent() {
+      const { analysis, board } = result;
+      const segung = board[analysis.segungIndex];
+      if (!segung) return;
+
+      const rel = segung.relation;
+      document.getElementById("freeContent").innerHTML = `
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+          <div style="text-align:center; background:var(--bg-panel);
+            border:1px solid var(--border-glow); border-radius:8px; padding:12px 20px;">
+            <div style="font-size:28px; font-family:'Noto Serif KR',serif; color:var(--gold)">
+              ${analysis.segungIndex}
+            </div>
+            <div style="font-size:11px; color:var(--text-muted)">${segung.gungInfo.name}</div>
+          </div>
+          <div>
+            <div style="font-size:15px; color:var(--text-main); margin-bottom:6px;">
+              ${segung.gungInfo.direction} · ${segung.gungInfo.ohaeng}
+            </div>
+            <div style="font-size:13px; color:var(--text-muted);">${segung.gungInfo.desc}</div>
+            <div style="margin-top:8px;">
+              <span class="score-badge badge-${rel.badge}" style="position:static; display:inline-block;">
+                ${rel.badge}
+              </span>
+              <span style="font-size:13px; color:var(--text-muted); margin-left:8px;">
+                ${rel.label} · ${rel.score}점
+              </span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.9;">
+          ${rel.summary}<br>${rel.desc}
+        </p>
+      `;
+    }
+
+    function showPremium() {
+      document.getElementById("unlockSection").style.display = "none";
+      document.getElementById("blurPreview").style.display = "none";
+      document.getElementById("premiumCard").style.display = "block";
+
+      const { analysis, board } = result;
+      const segungOhaeng = getOhaengChar(analysis.segungIndex);
+
+      const areas = Object.entries(FORTUNE_AREA);
+      let html = "";
+
+      areas.forEach(([key, area]) => {
+        // 해당 운세 영역과 연결된 십신 궁 찾기
+        const matched = Object.values(board).filter(g => {
+          if (g.gungNum === analysis.segungIndex) return false;
+          const targetOhaeng = getOhaengChar(g.gungNum);
+          const relCode = getYukhinRelCode(segungOhaeng, targetOhaeng);
+          return area.relCodes.includes(relCode);
+        });
+
+        const top = matched.sort((a, b) => b.relation.score - a.relation.score)[0];
+        const scoreLevel = top ? (top.relation.score >= 70 ? "high" : top.relation.score >= 40 ? "mid" : "low") : "mid";
+        const template = top ? PREMIUM_TEMPLATE[scoreLevel] : null;
+
+        html += `
+          <div class="fortune-area">
+            <div class="fortune-header">
+              <div class="fortune-title">
+                <span class="fortune-icon">${area.icon}</span>
+                <strong>${area.label}</strong>
+              </div>
+              ${top ? `<span class="score-badge badge-${top.relation.badge}" style="position:static">
+                ${top.relation.badge}</span>` : ""}
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); line-height:1.9;">
+              ${top ? template(top.gungInfo.name, top.gungInfo.direction,
+                (() => {
+                  const relCode = getYukhinRelCode(segungOhaeng, getOhaengChar(top.gungNum));
+                  const isYang = top.gungNum % 2 !== 0;
+                  const entry = YUKHIN_RULE[relCode];
+                  return entry ? (isYang ? entry.양?.name : entry.음?.name) || "" : "";
+                })()
+              ) : area.desc}
+            </p>
+          </div>
+        `;
+      });
+
+      document.getElementById("premiumContent").innerHTML = html;
+    }
+
+    // ── 결제 처리 (실제 PG 연동 필요) ─────────────
+    async function handlePayment() {
+      // TODO: 실제 결제 모듈(토스페이먼츠, 아임포트 등) 연동
+      // 개발 테스트용 임시 처리
+      const confirm = window.confirm(
+        "결제 모듈 연동 전 테스트 모드입니다.\n잠금을 해제할까요?"
+      );
+      if (confirm) {
+        await setPremiumStatus(true);
+        showToast("잠금이 해제되었습니다! ✓");
+        setTimeout(() => showPremium(), 800);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+  </script>
+
+</body>
+</html>
