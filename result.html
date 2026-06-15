@@ -51,6 +51,64 @@
     .gung-detail-row strong { color: var(--text-main); }
 
     /* summary 스타일은 style.css로 이관 */
+
+    /* ── 세궁 해설 블록 ── */
+    .segung-summary {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      background: rgba(180,140,80,0.05);
+      border: 1px solid rgba(180,140,80,0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .segung-summary-left {
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 12px 18px;
+      flex-shrink: 0;
+    }
+    .segung-num {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 30px;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .segung-gung-name {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    .segung-summary-right {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .segung-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .segung-desc {
+      font-size: 13px;
+      color: var(--text-main);
+      line-height: 1.75;
+    }
+    .segung-relation {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      padding: 7px 11px;
+      background: rgba(255,255,255,0.025);
+      border-left: 2px solid rgba(180,140,80,0.35);
+      border-radius: 0 4px 4px 0;
+    }
+    .segung-relation strong { color: var(--gold); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -89,6 +147,20 @@
     <!-- 구궁도 -->
     <div class="card">
       <div class="card-title">구궁도 (세궁: <span id="segungLabel" class="text-gold">-</span>)</div>
+
+      <!-- 세궁 해설 -->
+      <div class="segung-summary" id="segungSummary">
+        <div class="segung-summary-left">
+          <div class="segung-num" id="ssNum">-</div>
+          <div class="segung-gung-name" id="ssGungName">-</div>
+        </div>
+        <div class="segung-summary-right">
+          <div class="segung-meta" id="ssMeta">-</div>
+          <div class="segung-desc" id="ssDesc">-</div>
+          <div class="segung-relation" id="ssRelation"></div>
+        </div>
+      </div>
+
       <div class="gugung-grid" id="gugungGrid"></div>
 
       <!-- 클릭 시 상세 표시 -->
@@ -176,6 +248,33 @@
       document.getElementById("segungLabel").textContent =
         `${analysis.segungIndex}번 ${analysis.segungName}` +
         (analysis.dayGanOhaeng ? ` (일간 ${analysis.dayGanOhaeng})` : "");
+
+      // ── 세궁 해설 렌더링 ──────────────────────────
+      const segung = board[analysis.segungIndex];
+      if (segung) {
+        const sg = segung.gungInfo;
+        const sr = segung.relation;
+
+        document.getElementById("ssNum").textContent      = analysis.segungIndex;
+        document.getElementById("ssGungName").textContent = sg.name;
+        document.getElementById("ssMeta").textContent     =
+          `${sg.direction} · ${sg.ohaeng} · ${sg.desc}`;
+
+        // 세궁 도출 근거 설명
+        const ganDesc = analysis.dayGanOhaeng
+          ? `일간 오행(${analysis.dayGanOhaeng})을 기준으로 ` : "";
+        document.getElementById("ssDesc").textContent =
+          `${ganDesc}${meta.baseGuksu}국 ${meta.type} 포국에서 세궁은 ` +
+          `${sg.name}(${sg.direction})입니다. ` +
+          `이 방이 현재 나의 중심 자리로, 지반수 ${segung.jibansu}에 ` +
+          `천반수 ${segung.cheonbansu}이 올라앉은 구조입니다. ` +
+          `${sg.desc}의 기운이 주도하는 시기로 ${sr.summary}.`;
+
+        // 관계 요약
+        document.getElementById("ssRelation").innerHTML =
+          `<strong>${sr.label}</strong> · ${sr.score}점 &nbsp;—&nbsp; ${sr.desc}` +
+          (sr.detail ? `<br><span style="opacity:.8">↳ ${sr.detail}</span>` : "");
+      }
 
       // 구궁도 그리드 렌더링
       // CSS Grid 전통 방위 순서: [4,9,2 / 3,5,7 / 8,1,6]
