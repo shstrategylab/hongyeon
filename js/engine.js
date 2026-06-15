@@ -1,15 +1,8 @@
 // =====================================================
-// engine.js — 홍연기문 핵심 연산 엔진 v2.0 (정밀화)
-// 문서 원칙 기준 재구현
-//
-// 포국 순서:
-// 1. 절기 판별 → 양둔/음둔 확정
-// 2. 부두일 지지 → 삼원(상/중/하원) 판별
-// 3. 기준 국수 도출
-// 4. 낙서 경로로 지반 9궁 배치
-// 5. 사주 8글자 선천수 합산 → 홍국수(지반수·천반수) 산출
-// 6. 천반을 지반 위에 오버레이 배치
-// 7. 일간 오행 기준 세궁 도출
+// engine.js — 홍연기문 핵심 연산 엔진 v2.1
+// data-ganji.js: CHEONGAN, JIJI, SAMWON, GANJI_60, getHourToSiji
+// data-jeolgi.js: JEOLGI_ORDER, JEOLGI_APPROX_DATE, JEOLGI_DATA
+// data-gugung.js: GUGUNG, getRelationType
 // =====================================================
 
 
@@ -37,16 +30,36 @@ function getCurrentJeolgi(month, day) {
 // 부두일: 일간이 甲(갑) 또는 己(기)인 날
 // 해당 날의 지지로 상원/중원/하원 결정
 //
-// 간지를 직접 입력한 경우 → 일지(dayJi) 사용
-// 미입력 시 → 생월의 지지로 근사
-function getSamwon(dayGan, dayJi, monthJi) {
-  // 부두일 판별: 일간이 갑 또는 기인 날
-  const isBudu = dayGan === "갑" || dayGan === "기";
+// [수정 v2.1] GANJI_60 배열 활용으로 정확히 역산
+// - 부두일 자신이면 일지가 곧 부두 지지
+// - 부두일 아니면 GANJI_60에서 인덱스 % 5 거리만큼 역산
+// - 간지 미입력 시 월지로 근사
 
-  // 부두일의 지지로 삼원 결정
-  // 부두일이 아닌 경우 해당 60갑자 구간의 부두 지지를 역산하기 어려우므로
-  // 일지가 있으면 우선 사용, 없으면 월지로 근사
-  const targetJi = dayJi || monthJi || "자";
+// GANJI_60 은 data-ganji.js 에 정의되어 있음
+function getBuduJi(dayGan, dayJi) {
+  const ganji = dayGan + dayJi;
+  const idx = GANJI_60.indexOf(ganji);
+  if (idx === -1) return null;
+
+  // 갑·기는 5칸마다 부두 → idx % 5가 현재 일로부터 부두일까지의 거리
+  const distToBudu = idx % 5;
+  const buduIdx = idx - distToBudu; // 해당 구간 부두일의 GANJI_60 인덱스
+  return GANJI_60[buduIdx][1];      // 부두일 간지의 두 번째 글자 = 지지
+}
+
+function getSamwon(dayGan, dayJi, monthJi) {
+  let targetJi;
+
+  if (dayGan && dayJi) {
+    const isBudu = dayGan === "갑" || dayGan === "기";
+    if (isBudu) {
+      targetJi = dayJi;
+    } else {
+      targetJi = getBuduJi(dayGan, dayJi) || dayJi;
+    }
+  } else {
+    targetJi = monthJi || "자";
+  }
 
   for (const [key, val] of Object.entries(SAMWON)) {
     if (val.jijiList.includes(targetJi)) return key;
@@ -68,13 +81,11 @@ function getBaseGuksu(jeolgiKey, samwonKey) {
 
 
 // ── 4. 낙서 경로 배치 ─────────────────────────────
-// 고정 낙서 경로(궁 순서): 5→6→7→8→9→1→2→3→4
-// 기준국수(S)를 5번궁(중궁)에 놓고 경로 순서대로 +1(양둔) 또는 -1(음둔)
 const NAKSEO_PATH = [5, 6, 7, 8, 9, 1, 2, 3, 4];
 
 function buildJibanBoard(baseGuksu, type) {
   const isYangdun = type === "양둔";
-  const jibanBoard = {}; // { 궁번호: 지반수 }
+  const jibanBoard = {};
 
   for (let i = 0; i < 9; i++) {
     const gungNum = NAKSEO_PATH[i];
@@ -91,8 +102,6 @@ function buildJibanBoard(baseGuksu, type) {
 
 
 // ── 5. 홍국수 산출 ────────────────────────────────
-// 지반 홍국수: 사주 8글자 선천수 합산 → 9로 나눈 나머지
-// 천반 홍국수: 천간 4글자 선천수 합산 → 9로 나눈 나머지
 function calcHongguksu(saju8, cheongan4) {
   const sum8 = saju8.reduce((acc, ch) => {
     if (CHEONGAN[ch]) return acc + CHEONGAN[ch].num;
@@ -104,7 +113,7 @@ function calcHongguksu(saju8, cheongan4) {
     return acc + (CHEONGAN[ch]?.num || 0);
   }, 0);
 
-  const jibanHong  = sum8 % 9 === 0 ? 9 : sum8 % 9;
+  const jibanHong    = sum8 % 9 === 0 ? 9 : sum8 % 9;
   const cheonbanHong = sum4 % 9 === 0 ? 9 : sum4 % 9;
 
   return { jibanHong, cheonbanHong };
@@ -112,18 +121,14 @@ function calcHongguksu(saju8, cheongan4) {
 
 
 // ── 6. 천반 오버레이 배치 ─────────────────────────
-// 지반 홍국수가 있는 궁을 찾아 천반 홍국수를 그 위에 올리고
-// 나머지 천반 숫자는 낙서 경로 따라 순행/역행 배치
 function buildCheonbanBoard(jibanBoard, jibanHong, cheonbanHong, type) {
   const isYangdun = type === "양둔";
 
-  // 지반에서 jibanHong이 있는 궁 찾기
   const anchorGung = Object.keys(jibanBoard).find(
     g => jibanBoard[g] === jibanHong
   );
   if (!anchorGung) return {};
 
-  // anchorGung에서 NAKSEO_PATH 상 위치 찾기
   const anchorIdx = NAKSEO_PATH.indexOf(parseInt(anchorGung));
 
   const cheonbanBoard = {};
@@ -142,25 +147,21 @@ function buildCheonbanBoard(jibanBoard, jibanHong, cheonbanHong, type) {
 
 
 // ── 7. 세궁(世宮) 도출 ───────────────────────────
-// 세궁 = 일간(日干) 오행이 배속된 구궁
-// 일간 오행 → 해당 오행의 구궁 번호
 function getSegung(dayGan, jibanBoard) {
-  if (!dayGan || !CHEONGAN[dayGan]) return 5; // 기본: 중궁
+  if (!dayGan || !CHEONGAN[dayGan]) return 5;
 
-  const dayOhaeng = CHEONGAN[dayGan].ohaeng; // "목", "화", "토", "금", "수"
+  const dayOhaeng = CHEONGAN[dayGan].ohaeng;
 
-  // 오행별 대표 궁 매핑 (홍연기문 기준)
   const ohaengToGung = {
-    목: [3, 4],   // 진궁, 손궁
-    화: [9],      // 이궁
-    토: [2, 5, 8], // 곤궁, 중궁, 간궁
-    금: [6, 7],   // 건궁, 태궁
-    수: [1],      // 감궁
+    목: [3, 4],
+    화: [9],
+    토: [2, 5, 8],
+    금: [6, 7],
+    수: [1],
   };
 
   const candidates = ohaengToGung[dayOhaeng] || [5];
 
-  // 지반수가 가장 높은 궁(기운이 강한 궁)을 세궁으로
   let segung = candidates[0];
   let maxVal = 0;
   for (const g of candidates) {
@@ -177,7 +178,7 @@ function getSegung(dayGan, jibanBoard) {
 function assembleBoard(jibanBoard, cheonbanBoard, segungIndex) {
   const board = {};
   for (const gungNum of NAKSEO_PATH) {
-    const jiban  = jibanBoard[gungNum]   || 5;
+    const jiban  = jibanBoard[gungNum]    || 5;
     const cheon  = cheonbanBoard[gungNum] || 5;
     board[gungNum] = {
       gungNum,
@@ -200,36 +201,22 @@ function runHongyeon(input) {
     dayGan,  dayJi,  hourGan,  hourJi,
   } = input;
 
-  // 시지 확정 (입력값 우선, 없으면 시간에서 변환)
   const sijiChar = hourJi || siji || getHourToSiji(hour || 12);
 
-  // ① 절기 판별
-  const jeolgiKey = getCurrentJeolgi(month, day);
-
-  // ② 삼원 판별 (일간·일지 기준, 미입력 시 월지 근사)
-  const samwonKey = getSamwon(dayGan, dayJi, monthJi);
-
-  // ③ 기준 국수
+  const jeolgiKey  = getCurrentJeolgi(month, day);
+  const samwonKey  = getSamwon(dayGan, dayJi, monthJi);
   const { guksu: baseGuksu, type, jeolgiName } = getBaseGuksu(jeolgiKey, samwonKey);
 
-  // ④ 지반 포국 (낙서 경로)
   const jibanBoard = buildJibanBoard(baseGuksu, type);
 
-  // ⑤ 홍국수 산출
-  const saju8    = [yearGan, yearJi, monthGan, monthJi, dayGan, dayJi, hourGan, sijiChar].filter(Boolean);
+  const saju8     = [yearGan, yearJi, monthGan, monthJi, dayGan, dayJi, hourGan, sijiChar].filter(Boolean);
   const cheongan4 = [yearGan, monthGan, dayGan, hourGan].filter(Boolean);
   const { jibanHong, cheonbanHong } = calcHongguksu(saju8, cheongan4);
 
-  // ⑥ 천반 오버레이
   const cheonbanBoard = buildCheonbanBoard(jibanBoard, jibanHong, cheonbanHong, type);
+  const segungIndex   = getSegung(dayGan, jibanBoard);
+  const board         = assembleBoard(jibanBoard, cheonbanBoard, segungIndex);
 
-  // ⑦ 세궁 도출 (일간 오행 기준)
-  const segungIndex = getSegung(dayGan, jibanBoard);
-
-  // ⑧ 최종 board 조립
-  const board = assembleBoard(jibanBoard, cheonbanBoard, segungIndex);
-
-  // 경고: 간지 미입력 시 정확도 저하 안내
   const hasSaju = !!(yearGan && monthGan && dayGan);
   const warning = hasSaju ? null
     : "사주팔자 간지를 입력하지 않아 절기 기반 근사값으로 포국했습니다. 정확한 풀이를 위해 만세력으로 간지를 확인 후 입력해주세요.";
@@ -243,7 +230,7 @@ function runHongyeon(input) {
       jibanHong,
       cheonbanHong,
       segungIndex,
-      segungName: GUGUNG[segungIndex]?.name || "",
+      segungName:   GUGUNG[segungIndex]?.name || "",
       dayGanOhaeng: dayGan ? CHEONGAN[dayGan]?.ohaeng : null,
     },
     board,
@@ -274,11 +261,8 @@ function buildAiPrompt(result, userInput, topic) {
   };
 
   const topicGuide = topicMap[topic] || topicMap.general;
-
-  // 간지 입력 여부에 따라 분기
   const hasSaju = !!(userInput.yearGan && userInput.monthGan && userInput.dayGan);
 
-  // 간지 미입력 시: 내부 지시로만 처리 (출력하지 않음)
   const accuracyNote = hasSaju ? "" : `\
 [내부 지침 — 응답에 이 내용을 그대로 출력하지 마세요]
 이 포국은 사주팔자 간지 없이 절기 기반 근사값으로 산출되었습니다.
@@ -289,7 +273,6 @@ function buildAiPrompt(result, userInput, topic) {
   "📌 만세력으로 일진 간지를 입력하시면 세궁·용신 연계 정밀 분석이 가능합니다."
 `;
 
-  // 간지 입력 시: 정밀 해석 지시
   const precisionNote = hasSaju ? `\
 [내부 지침 — 응답에 이 내용을 그대로 출력하지 마세요]
 사주팔자 간지가 모두 입력되었습니다.
