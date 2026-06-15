@@ -58,6 +58,13 @@
       ${navHTML}
     </nav>`;
 
+  // 파비콘 자동 삽입
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = 'image/svg+xml';
+  link.href = 'favicon.svg';
+  document.head.appendChild(link);
+
   function inject() {
     const main = document.querySelector('main');
     if (main) {
