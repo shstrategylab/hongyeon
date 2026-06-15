@@ -239,7 +239,7 @@
             <span class="score-badge badge-${g.relation.badge}" style="margin-left:4px; position:static;">${g.relation.badge}</span>
             <br>
             <span class="text-sm" style="color: var(--text-main);">${g.relation.desc}</span>
-            ${g.relation.detail ? `<br><span class="text-sm text-muted" style="display:block; margin-top:4px;">${g.relation.detail}</span>` : ""}
+            ${g.relation.detail ? `<br><span class="text-sm text-muted">↳ ${g.relation.detail}</span>` : ""}
           </div>
         `;
         list.appendChild(li);
@@ -259,7 +259,7 @@
       document.getElementById("detailRelation").textContent = g.relation.label;
       document.getElementById("detailScore").textContent   = g.relation.score + "점";
       document.getElementById("detailDesc").textContent    = g.relation.desc;
-      document.getElementById("detailExtra").textContent   = g.relation.detail || "";
+      document.getElementById("detailExtra").textContent   = g.relation.detail ? "↳ " + g.relation.detail : "";
 
       detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
