@@ -59,6 +59,11 @@
       ${navHTML}
     </nav>`;
 
-  // <body> 맨 앞에 삽입
-  document.body.insertAdjacentHTML('afterbegin', headerHTML);
+  // <main> 앞에 삽입 — script 위치에 관계없이 항상 올바른 위치에 렌더링
+  const main = document.querySelector('main');
+  if (main) {
+    main.insertAdjacentHTML('beforebegin', headerHTML);
+  } else {
+    document.body.insertAdjacentHTML('afterbegin', headerHTML);
+  }
 })();
