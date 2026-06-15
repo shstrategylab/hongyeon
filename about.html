@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이 사이트는 무엇을 하나요? — 홍연 마스터</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .about-section { margin-top: 20px; }
+    .about-section h3 {
+      font-size: 15px; color: var(--gold);
+      margin-bottom: 10px; font-weight: 600;
+    }
+    .about-section p, .about-section li {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .about-section ul { padding-left: 18px; margin: 8px 0 0; }
+    .about-section li { margin-bottom: 6px; }
+
+    .compare-table {
+      width: 100%; border-collapse: collapse; margin-top: 12px;
+      font-size: 12.5px;
+    }
+    .compare-table th, .compare-table td {
+      border: 1px solid var(--border);
+      padding: 10px 8px; text-align: left;
+      color: var(--text-muted);
+    }
+    .compare-table th {
+      background: rgba(180,140,80,0.10);
+      color: var(--gold); font-weight: 600;
+      font-size: 12px;
+    }
+    .compare-table td:first-child { color: var(--text-dim); white-space: nowrap; }
+
+    .step-flow {
+      display: flex; flex-direction: column; gap: 10px; margin-top: 14px;
+    }
+    .step-flow .step {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg-panel);
+    }
+    .step-flow .num {
+      flex-shrink: 0; width: 28px; height: 28px;
+      border-radius: 50%; background: rgba(180,140,80,0.15);
+      border: 1px solid var(--border-glow); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .step-flow .txt { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .step-flow .txt b { color: var(--text-main); }
+
+    .cta-row {
+      display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap;
+    }
+    .cta-row .btn { flex: 1; min-width: 140px; text-align: center; }
+
+    .audience-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;
+    }
+    @media (max-width: 480px) {
+      .audience-grid { grid-template-columns: 1fr; }
+    }
+    .audience-grid .item {
+      padding: 12px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg-panel);
+      font-size: 12.5px; color: var(--text-muted); line-height: 1.6;
+    }
+    .audience-grid .item b { color: var(--gold); display: block; margin-bottom: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">洪烟 마스터</span>
+    <span class="logo-sub">홍연기문 · 홍국기문 운세 분석</span>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav-bar">
+      <a href="about.html" class="nav-item active">소개</a>
+      <a href="learn.html" class="nav-item">홍연기문 배우기</a>
+      <a href="index.html" class="nav-item">포국 입력</a>
+      <a href="result.html" class="nav-item">구궁도 결과</a>
+      <a href="premium.html" class="nav-item">심층 풀이</a>
+    </nav>
+
+    <div class="card">
+      <div class="card-title">이 사이트는 무엇을 하나요?</div>
+      <div class="about-section">
+        <p>
+          <b style="color:var(--gold)">홍연 마스터</b>는 생년월일시를 입력하면
+          <b>홍연기문(洪烟奇門)</b> 방식으로 사주를 9개의 방(구궁)에 배치하고,
+          그 안의 숫자들이 서로 돕는지 싸우는지를 계산해 길흉을 보여주는
+          운세 분석 서비스입니다.
+        </p>
+        <p style="margin-top:8px;">
+          쉽게 말해, <b>"내 사주를 숫자판으로 변환해서 9칸짜리 지도 위에 펼쳐놓고,
+          어디가 좋은 방향이고 어디가 조심할 방향인지 알려주는 도구"</b>입니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">한눈에 보는 이용 흐름</div>
+      <div class="step-flow">
+        <div class="step">
+          <div class="num">1</div>
+          <div class="txt"><b>생년월일시 입력</b> — 정확한 사주 간지를 알면 직접 입력,
+          모르면 양력/음력 생일과 태어난 시간만 입력해도 근사 분석이 가능합니다.</div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="txt"><b>구궁도 자동 계산</b> — 입력값을 바탕으로 지반수·천반수를
+          산출하고 9개 방에 배치, 각 방의 생극관계와 팔문(八門)을 분석합니다.</div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div class="txt"><b>결과 확인</b> — 구궁도 표와 함께 길방 TOP3 · 흉방 TOP3를
+          한눈에 보여주는 요약을 제공합니다.</div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="txt"><b>심층 풀이(선택)</b> — 십신·육친까지 반영한 정밀 해석이나,
+          AI에게 바로 물어볼 수 있는 프롬프트를 받아볼 수 있습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">사주명리 / 하락이수와 무엇이 다른가요?</div>
+      <table class="compare-table">
+        <tr>
+          <th>구분</th>
+          <th>사주명리</th>
+          <th>하락이수</th>
+          <th>홍연기문</th>
+        </tr>
+        <tr>
+          <td>핵심 재료</td>
+          <td>천간·지지 8글자</td>
+          <td>숫자 1개(괘)</td>
+          <td>8글자 → 숫자(홍국수)</td>
+        </tr>
+        <tr>
+          <td>풀이 방식</td>
+          <td>글자 간 오행 관계</td>
+          <td>괘의 상징 풀이</td>
+          <td>9개 방에 숫자를 2겹으로 배치 후 생극 분석</td>
+        </tr>
+        <tr>
+          <td>강점</td>
+          <td>성격·평생 흐름</td>
+          <td>빠른 판단·단기 길흉</td>
+          <td>방위·시기·구체적 사건의 입체적 진단</td>
+        </tr>
+        <tr>
+          <td>난이도</td>
+          <td>중간</td>
+          <td>비교적 단순</td>
+          <td>변수 多 — 가장 복잡</td>
+        </tr>
+      </table>
+      <p style="margin-top:10px; font-size:12px; color:var(--text-dim);">
+        ※ 홍연기문이 더 어렵게 느껴지는 건 당연합니다. 같은 정보를 더 많은 층(지반·천반·팔문·신살)으로
+        쪼개서 보기 때문입니다. 처음 보시는 분은 먼저 <a href="learn.html" style="color:var(--gold);">홍연기문 배우기</a>
+        페이지에서 기본 원리를 가볍게 보고 오시는 걸 추천합니다.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">이런 분들께 추천합니다</div>
+      <div class="audience-grid">
+        <div class="item">
+          <b>방위·이동운이 궁금한 분</b>
+          이사, 출장, 여행에 좋은 방향과 피해야 할 방향을 알고 싶을 때
+        </div>
+        <div class="item">
+          <b>시기를 구체적으로 알고 싶은 분</b>
+          "언제쯈 조심해야 하는지" 같은 타이밍 중심의 질문에 강합니다
+        </div>
+        <div class="item">
+          <b>사주명리를 이미 보신 분</b>
+          기존 풀이를 입체적인 관점으로 한 번 더 검토해보고 싶을 때
+        </div>
+        <div class="item">
+          <b>새로운 학문이 궁금한 분</b>
+          기문둔갑·홍연기문의 원리 자체를 가볍게 배워보고 싶을 때
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a href="learn.html" class="btn btn-secondary">📖 원리부터 배우기</a>
+      <a href="index.html" class="btn btn-primary">✦ 내 사주로 바로 보기</a>
+    </div>
+
+  </main>
+
+</body>
+</html>

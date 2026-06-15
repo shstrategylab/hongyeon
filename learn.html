@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍연기문 배우기 — 홍연 마스터</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .lesson-section { margin-top: 4px; }
+    .lesson-section h3 {
+      font-size: 15px; color: var(--gold);
+      margin-bottom: 10px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .lesson-section h3 .badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:24px; height:24px; border-radius:6px;
+      background: rgba(180,140,80,0.15); border:1px solid var(--border-glow);
+      color: var(--gold); font-size:12px; font-weight:700;
+    }
+    .lesson-section p, .lesson-section li {
+      font-size: 13px; color: var(--text-muted); line-height: 1.75;
+    }
+    .lesson-section ul { padding-left: 18px; margin: 8px 0 0; }
+    .lesson-section li { margin-bottom: 6px; }
+
+    .analogy-box {
+      margin-top: 10px; padding: 12px;
+      border: 1px solid var(--border-glow);
+      border-radius: 8px; background: rgba(180,140,80,0.06);
+      font-size: 12.5px; color: var(--text-muted); line-height: 1.7;
+    }
+    .analogy-box .label {
+      display:inline-block; font-size:11px; color: var(--gold);
+      font-weight:700; margin-bottom: 4px;
+    }
+
+    .term-grid {
+      display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px;
+    }
+    .term-card {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; background: var(--bg-panel);
+    }
+    .term-card .term-name {
+      font-size: 13px; color: var(--gold); font-weight: 600; margin-bottom: 4px;
+    }
+    .term-card .term-desc {
+      font-size: 12.5px; color: var(--text-muted); line-height: 1.6;
+    }
+
+    .gugung-demo {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 6px; margin-top: 14px; max-width: 320px;
+    }
+    .gugung-demo .cell {
+      aspect-ratio: 1; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--bg-panel);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--text-dim); gap: 2px; padding: 4px;
+    }
+    .gugung-demo .cell .dir { font-size: 10px; color: var(--text-dim); }
+    .gugung-demo .cell .jiban {
+      font-size: 16px; font-weight: 700; color: var(--gold);
+    }
+    .gugung-demo .cell .cheon {
+      font-size: 11px; color: var(--text-muted);
+    }
+    .gugung-demo .cell.center {
+      border-color: var(--border-glow);
+      background: rgba(180,140,80,0.10);
+    }
+
+    .ohaeng-flow {
+      display:flex; align-items:center; justify-content:center;
+      gap: 8px; margin-top: 12px; flex-wrap: wrap; font-size: 13px;
+    }
+    .ohaeng-flow .el {
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--bg-panel);
+      color: var(--text-muted);
+    }
+    .ohaeng-flow .arrow { color: var(--text-dim); font-size: 12px; }
+
+    .quiz-box {
+      margin-top: 14px; padding: 14px;
+      border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg-panel);
+    }
+    .quiz-box .q { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+    .quiz-options label {
+      font-size: 12.5px; color: var(--text-muted);
+      padding: 8px 10px; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; display: flex; gap: 8px; align-items: center;
+      transition: all 0.15s;
+    }
+    .quiz-options label:hover { border-color: var(--border-glow); }
+    .quiz-feedback {
+      margin-top: 8px; font-size: 12.5px; padding: 8px 10px;
+      border-radius: 6px; display: none;
+    }
+    .quiz-feedback.correct {
+      display:block; background: rgba(120,180,100,0.12);
+      color: #9fd89a; border: 1px solid rgba(120,180,100,0.3);
+    }
+    .quiz-feedback.wrong {
+      display:block; background: rgba(200,90,90,0.12);
+      color: #e0a0a0; border: 1px solid rgba(200,90,90,0.3);
+    }
+
+    .toc-list { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+    .toc-list a {
+      font-size: 12.5px; color: var(--text-muted); text-decoration:none;
+      padding: 8px 10px; border:1px solid var(--border); border-radius:6px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .toc-list a:hover { border-color: var(--border-glow); color: var(--gold); }
+    .toc-list .arrow-r { color: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">洪烟 마스터</span>
+    <span class="logo-sub">홍연기문 · 홍국기문 운세 분석</span>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav-bar">
+      <a href="about.html" class="nav-item">소개</a>
+      <a href="learn.html" class="nav-item active">홍연기문 배우기</a>
+      <a href="index.html" class="nav-item">포국 입력</a>
+      <a href="result.html" class="nav-item">구궁도 결과</a>
+      <a href="premium.html" class="nav-item">심층 풀이</a>
+    </nav>
+
+    <div class="card">
+      <div class="card-title">홍연기문, 3단계로 끝내기</div>
+      <div class="lesson-section">
+        <p>
+          사주 입력 없이 먼저 원리만 가볍게 이해하는 페이지입니다.
+          아래 목차를 순서대로 보시면 구궁도 결과 페이지가 훨씬 쉽게 읽힙니다.
+        </p>
+        <div class="toc-list">
+          <a href="#step1"><span>1단계 — 사주를 숫자로 바꾸기 (포국)</span><span class="arrow-r">›</span></a>
+          <a href="#step2"><span>2단계 — 9개의 방에 배치하기 (구궁)</span><span class="arrow-r">›</span></a>
+          <a href="#step3"><span>3단계 — 숫자들의 생극 보기</span><span class="arrow-r">›</span></a>
+          <a href="#palmun"><span>+ 팔문(八門)이란?</span><span class="arrow-r">›</span></a>
+          <a href="#quiz"><span>+ 간단 퀴즈로 확인하기</span><span class="arrow-r">›</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="step1">
+      <div class="card-title">1단계 — 사주를 '숫자'로 바꾸기 (포국)</div>
+      <div class="lesson-section">
+        <p>
+          태어난 년·월·일·시(사주)를 계산 공식을 통해 1~10 사이의 숫자(<b style="color:var(--gold)">홍국수</b>)로
+          바꿉니다. 이 숫자는 두 가지 의미를 가집니다.
+        </p>
+        <div class="term-grid">
+          <div class="term-card">
+            <div class="term-name">지반수 (地盤數) — 땅의 숫자</div>
+            <div class="term-desc">나의 내면, 기본 성향, 근거지를 뜻합니다. "원래 나는 어떤 사람인가"에 해당합니다.</div>
+          </div>
+          <div class="term-card">
+            <div class="term-name">천반수 (天盤數) — 하늘의 숫자</div>
+            <div class="term-desc">나를 둘러싼 사회적 환경, 외부에서 오는 변화를 뜻합니다. "지금 나에게 무슨 일이 닥치는가"에 해당합니다.</div>
+          </div>
+        </div>
+        <div class="analogy-box">
+          <span class="label">💡 비유</span><br>
+          지반수는 "내가 들고 있는 카드", 천반수는 "테이블 위에 펼쳐진 상대방 카드"라고 생각하면 됩니다.
+          이 두 카드가 만나서 게임의 결과(길흉)가 결정됩니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="step2">
+      <div class="card-title">2단계 — 9개의 방에 배치하기 (구궁)</div>
+      <div class="lesson-section">
+        <p>
+          정사각형을 9칸으로 나눈 바둑판 모양의 '구궁(九宮)'에 위에서 구한 숫자들을 채워 넣습니다.
+          각 칸은 방위(동·서·남·북 등)와 의미(직장, 재물, 인간관계 등)를 함께 가지고 있습니다.
+        </p>
+        <p style="margin-top:8px;">
+          아래는 구궁판이 어떻게 생겼는지 보여주는 예시입니다. 각 칸 위에 작은 숫자(천반수)와
+          큰 숫자(지반수)가 함께 표시됩니다.
+        </p>
+        <div class="gugung-demo">
+          <div class="cell"><span class="dir">동남</span><span class="cheon">천4</span><span class="jiban">9</span></div>
+          <div class="cell"><span class="dir">남</span><span class="cheon">천2</span><span class="jiban">2</span></div>
+          <div class="cell"><span class="dir">서남</span><span class="cheon">천6</span><span class="jiban">7</span></div>
+          <div class="cell"><span class="dir">동</span><span class="cheon">천3</span><span class="jiban">8</span></div>
+          <div class="cell center"><span class="dir">중궁(나)</span><span class="cheon">천5</span><span class="jiban">5</span></div>
+          <div class="cell"><span class="dir">서</span><span class="cheon">천7</span><span class="jiban">4</span></div>
+          <div class="cell"><span class="dir">동북</span><span class="cheon">천8</span><span class="jiban">1</span></div>
+          <div class="cell"><span class="dir">북</span><span class="cheon">천1</span><span class="jiban">6</span></div>
+          <div class="cell"><span class="dir">서북</span><span class="cheon">천9</span><span class="jiban">3</span></div>
+        </div>
+        <p style="margin-top:10px; font-size:12px; color:var(--text-dim);">
+          ※ 위 숫자는 예시일 뿐이며, 실제 값은 입력하신 생년월일시에 따라 계산됩니다.
+        </p>
+        <div class="analogy-box">
+          <span class="label">💡 비유</span><br>
+          구궁판은 "9개의 CCTV 화면이 분할된 모니터"입니다. 그중 한 칸(세궁)이 '나'를 비추는 화면이고,
+          나머지 8칸은 인간관계·재물·직장 등 인생의 각 영역을 비추는 화면입니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="step3">
+      <div class="card-title">3단계 — 숫자들의 '싸움과 도움' 보기 (생극제화)</div>
+      <div class="lesson-section">
+        <p>
+          각 방에 배치된 지반수·천반수는 오행(목·화·토·금·수) 중 하나에 속합니다.
+          이 두 숫자가 만났을 때 서로 돕는지(상생) 싸우는지(상극)를 봅니다.
+        </p>
+        <div class="ohaeng-flow">
+          <span class="el">목(木)</span><span class="arrow">생→</span>
+          <span class="el">화(火)</span><span class="arrow">생→</span>
+          <span class="el">토(土)</span><span class="arrow">생→</span>
+          <span class="el">금(金)</span><span class="arrow">생→</span>
+          <span class="el">수(水)</span><span class="arrow">생→</span>
+          <span class="el">목(木)</span>
+        </div>
+        <p style="text-align:center; font-size:11px; color:var(--text-dim); margin-top:4px;">
+          (화살표 방향이 '서로 돕는' 상생 순서입니다. 한 칸 건너뛰면 '서로 부딪히는' 상극 관계가 됩니다)
+        </p>
+        <div class="term-grid" style="margin-top:14px;">
+          <div class="term-card">
+            <div class="term-name">상생 (相生) — 도움</div>
+            <div class="term-desc">천반수가 지반수를 돕는 오행 관계면, "운이 풀리고 일이 순조롭게 진행되는 시기"로 봅니다.</div>
+          </div>
+          <div class="term-card">
+            <div class="term-name">상극 (相剋) — 싸움</div>
+            <div class="term-desc">천반수가 지반수를 억누르거나 공격하는 관계면, "건강 문제나 지출이 생기는 시기"로 봅니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="palmun">
+      <div class="card-title">+ 팔문(八門)이란?</div>
+      <div class="lesson-section">
+        <p>
+          숫자(홍국수)와 생극 관계만으로도 길흉을 볼 수 있지만, 홍연기문은 여기에
+          '문(門)'이라는 또 하나의 층을 추가합니다. 각 방에는 8가지 문 중 하나가 배속되는데,
+          이 문이 그 방의 분위기를 결정합니다.
+        </p>
+        <div class="term-grid">
+          <div class="term-card">
+            <div class="term-name">개문(開門) · 생기(生氣) — 좋은 문</div>
+            <div class="term-desc">문이 활짝 열려 있어 기회가 들어오는 자리. 합격, 취업, 새로운 시작에 좋습니다.</div>
+          </div>
+          <div class="term-card">
+            <div class="term-name">두문(杜門) · 사문(死門) — 막힌 문</div>
+            <div class="term-desc">문이 막혀 있거나 닫혀 있는 자리. 일이 풀리지 않거나, 건강·관계에서 주의가 필요합니다.</div>
+          </div>
+        </div>
+        <div class="analogy-box">
+          <span class="label">💡 비유</span><br>
+          숫자(생극)는 "그 방에 들어온 손님이 친구인지 적인지"를 알려주고,
+          팔문은 "그 방의 문이 열려 있는지 잠겨 있는지"를 알려줍니다.
+          좋은 손님(상생)이 와도 문이 잠겨 있으면(두문·사문) 효과가 줄고,
+          나쁜 손님(상극)이라도 문이 열려 있으면(개문) 어느 정도 완화됩니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="quiz">
+      <div class="card-title">간단 퀴즈로 확인하기</div>
+      <div class="lesson-section">
+        <p>아래 질문에 답해보면서 방금 배운 내용을 확인해보세요.</p>
+
+        <div class="quiz-box">
+          <div class="q">Q1. 나의 내면과 기본 성향을 뜻하는 숫자는?</div>
+          <div class="quiz-options" data-quiz="q1">
+            <label><input type="radio" name="q1" value="wrong"> 천반수</label>
+            <label><input type="radio" name="q1" value="correct"> 지반수</label>
+            <label><input type="radio" name="q1" value="wrong"> 세궁수</label>
+          </div>
+          <div class="quiz-feedback" data-feedback="q1"></div>
+        </div>
+
+        <div class="quiz-box">
+          <div class="q">Q2. 천반수가 지반수를 돕는 오행 관계일 때를 무엇이라 하나요?</div>
+          <div class="quiz-options" data-quiz="q2">
+            <label><input type="radio" name="q2" value="correct"> 상생(相生)</label>
+            <label><input type="radio" name="q2" value="wrong"> 상극(相剋)</label>
+            <label><input type="radio" name="q2" value="wrong"> 합충(合沖)</label>
+          </div>
+          <div class="quiz-feedback" data-feedback="q2"></div>
+        </div>
+
+        <div class="quiz-box">
+          <div class="q">Q3. 문이 활짝 열려 기회가 들어오는 좋은 문은?</div>
+          <div class="quiz-options" data-quiz="q3">
+            <label><input type="radio" name="q3" value="wrong"> 두문(杜門)</label>
+            <label><input type="radio" name="q3" value="wrong"> 사문(死門)</label>
+            <label><input type="radio" name="q3" value="correct"> 개문(開門)</label>
+          </div>
+          <div class="quiz-feedback" data-feedback="q3"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div class="card-title" style="justify-content:center;">이제 내 사주로 직접 확인해보세요</div>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+        지반수·천반수·생극·팔문이 무엇인지 이해했다면,
+        구궁도 결과 페이지가 훨씬 쉽게 읽힐 거예요.
+      </p>
+      <a href="index.html" class="btn btn-primary">✦ 포국 시작하기</a>
+    </div>
+
+  </main>
+
+  <script>
+    document.querySelectorAll('.quiz-options').forEach(group => {
+      const quizName = group.dataset.quiz;
+      const feedback = document.querySelector(`[data-feedback="${quizName}"]`);
+      group.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('change', () => {
+          feedback.classList.remove('correct', 'wrong');
+          if (input.value === 'correct') {
+            feedback.textContent = '✅ 정답입니다!';
+            feedback.classList.add('correct');
+          } else {
+            feedback.textContent = '❌ 다시 한번 생각해보세요.';
+            feedback.classList.add('wrong');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
