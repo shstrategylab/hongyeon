@@ -127,7 +127,8 @@
         <div class="gung-detail-row">
           <span>운세 점수</span><strong id="detailScore">-</strong>
         </div>
-        <p class="mt-8 text-sm" style="color: var(--text-muted);" id="detailDesc">-</p>
+        <p class="mt-8 text-sm" style="color: var(--text-main);" id="detailDesc">-</p>
+        <p class="mt-8 text-sm text-muted" id="detailExtra">-</p>
       </div>
     </div>
 
@@ -237,7 +238,8 @@
             <span class="text-muted" style="margin-left:8px; font-size:11px">${g.gungInfo.direction}</span>
             <span class="score-badge badge-${g.relation.badge}" style="margin-left:4px; position:static;">${g.relation.badge}</span>
             <br>
-            <span class="text-sm text-muted">${g.relation.desc}</span>
+            <span class="text-sm" style="color: var(--text-main);">${g.relation.desc}</span>
+            ${g.relation.detail ? `<br><span class="text-sm text-muted" style="display:block; margin-top:4px;">${g.relation.detail}</span>` : ""}
           </div>
         `;
         list.appendChild(li);
@@ -257,6 +259,7 @@
       document.getElementById("detailRelation").textContent = g.relation.label;
       document.getElementById("detailScore").textContent   = g.relation.score + "점";
       document.getElementById("detailDesc").textContent    = g.relation.desc;
+      document.getElementById("detailExtra").textContent   = g.relation.detail || "";
 
       detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
