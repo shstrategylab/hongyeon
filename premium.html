@@ -70,6 +70,29 @@
       font-size: 11px;
       padding: 2px 8px;
     }
+    .summary-item-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.9;
+    }
+    .summary-item-detail {
+      display: flex;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.025);
+      border-left: 2px solid rgba(180,140,80,0.35);
+      border-radius: 0 4px 4px 0;
+      margin-top: 6px;
+    }
+    .summary-item-detail-arrow {
+      color: var(--gold);
+      opacity: 0.6;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -200,9 +223,14 @@
             </div>
           </div>
         </div>
-        <p style="font-size:13px; color:var(--text-muted); line-height:1.9;">
+        <div class="summary-item-desc" style="font-size:13px; margin-bottom: ${rel.detail ? '8px' : '0'};">
           ${rel.summary}<br>${rel.desc}
-        </p>
+        </div>
+        ${rel.detail ? `
+        <div class="summary-item-detail">
+          <span class="summary-item-detail-arrow">↳</span>
+          <span>${rel.detail}</span>
+        </div>` : ""}
       `;
     }
 
@@ -240,7 +268,7 @@
               ${top ? `<span class="score-badge badge-${top.relation.badge}" style="position:static">
                 ${top.relation.badge}</span>` : ""}
             </div>
-            <p style="font-size:13px; color:var(--text-muted); line-height:1.9;">
+            <div class="summary-item-desc" style="font-size:13px;">
               ${top ? template(top.gungInfo.name, top.gungInfo.direction,
                 (() => {
                   const relCode = getYukhinRelCode(segungOhaeng, getOhaengChar(top.gungNum));
@@ -249,7 +277,8 @@
                   return entry ? (isYang ? entry.양?.name : entry.음?.name) || "" : "";
                 })()
               ) : area.desc}
-            </p>
+            </div>
+            ${top && top.relation.detail ? '<div class="summary-item-detail"><span class="summary-item-detail-arrow">↳</span><span>' + top.relation.detail + '</span></div>' : ""}
           </div>
         `;
       });
