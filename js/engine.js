@@ -274,10 +274,36 @@ function buildAiPrompt(result, userInput, topic) {
   };
 
   const topicGuide = topicMap[topic] || topicMap.general;
-  const warningText = meta.warning ? `\n⚠️ 주의: ${meta.warning}\n` : "";
 
-  return `당신은 홍연기문(홍국기문) 전문 역술가입니다. 아래 포국 데이터를 바탕으로 심층 운세 해석을 해주세요.
-${warningText}
+  // 간지 입력 여부에 따라 분기
+  const hasSaju = !!(userInput.yearGan && userInput.monthGan && userInput.dayGan);
+
+  // 간지 미입력 시: 내부 지시로만 처리 (출력하지 않음)
+  const accuracyNote = hasSaju ? "" : `\
+[내부 지침 — 응답에 이 내용을 그대로 출력하지 마세요]
+이 포국은 사주팔자 간지 없이 절기 기반 근사값으로 산출되었습니다.
+해석 시 다음을 반드시 준수하세요:
+- 일간 오행·세궁이 근사치임을 감안해 단정적 표현보다 "가능성", "경향" 위주로 서술
+- 해석 본문에 정확도 한계를 언급하지 말 것 (사용자 UX 저해)
+- 응답 마지막에 딱 한 줄만, 아래 형식으로 안내 추가:
+  "📌 만세력으로 일진 간지를 입력하시면 세궁·용신 연계 정밀 분석이 가능합니다."
+`;
+
+  // 간지 입력 시: 정밀 해석 지시
+  const precisionNote = hasSaju ? `\
+[내부 지침 — 응답에 이 내용을 그대로 출력하지 마세요]
+사주팔자 간지가 모두 입력되었습니다.
+- 일간(${analysis.dayGanOhaeng} 오행) 기준 용신·기신 관계를 세궁 분석에 반드시 반영
+- 세궁 천반·지반 수의 오행 상생·상극 관계를 구체적으로 해석
+- 단정적이고 구체적인 시기·방위 조언 제공
+` : "";
+
+  return `[시스템 역할]
+당신은 홍연기문(홍국기문) 전문 역술가입니다. 아래 포국 데이터와 내부 지침을 바탕으로 심층 운세 해석을 제공하세요.
+
+${accuracyNote}${precisionNote}
+---
+
 ## 기본 정보
 - 생년월일시: ${userInput.year}년 ${userInput.month}월 ${userInput.day}일 (${meta.sijiChar}시)
 - 양력/음력: ${userInput.calType === 'solar' ? '양력' : userInput.calType === 'lunar' ? '음력' : '음력 윤달'}
@@ -286,7 +312,7 @@ ${warningText}
 ## 절기·포국 정보
 - 절기: ${meta.jeolgiName} / ${meta.type} ${meta.baseGuksu}국
 - 삼원: ${samwonLabel[meta.samwonKey]}
-- 일간 오행: ${analysis.dayGanOhaeng || '미입력'}
+- 일간 오행: ${analysis.dayGanOhaeng || '미입력 (근사 포국)'}
 
 ## 홍국수
 - 지반 홍국수: ${analysis.jibanHong}
@@ -295,6 +321,8 @@ ${warningText}
 
 ## 구궁 포국 결과
 ${boardText}
+
+---
 
 ## 해석 요청 (주제: ${topicGuide})
 1. 세궁(${analysis.segungName})의 천반·지반 관계와 현재 운세 전체 흐름을 설명해주세요.
