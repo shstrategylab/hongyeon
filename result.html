@@ -208,6 +208,9 @@
         <div class="gung-detail-row">
           <span>운세 점수</span><strong id="detailScore">-</strong>
         </div>
+        <div class="gung-detail-row" id="detailPalmunRow">
+          <span>팔문</span><strong id="detailPalmun" style="text-align:right; max-width:70%; font-size:12px;">-</strong>
+        </div>
         <!-- ① 궁 고유 해설 -->
         <div class="detail-gung-life mt-8" id="detailDesc">-</div>
         <!-- ② 천반·지반 관계 해설 -->
@@ -249,6 +252,7 @@
   <script>
     // 저장된 결과 불러오기
     const result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
+    let palmunBoard = {};   // showDetail에서도 참조
 
     if (!result) {
       alert("입력 데이터가 없습니다. 처음부터 시작해주세요.");
@@ -304,6 +308,11 @@
           (sr.detail ? `<br><span style="opacity:.8">↳ ${sr.detail}</span>` : "");
       }
 
+      // 팔문 배속
+      palmunBoard = (typeof buildPalmunBoard === "function")
+        ? buildPalmunBoard(analysis.segungIndex)
+        : {};
+
       // 구궁도 그리드 렌더링
       // CSS Grid 전통 방위 순서: [4,9,2 / 3,5,7 / 8,1,6]
       const gridOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
@@ -323,6 +332,12 @@
         const cell = document.createElement("div");
         cell.className = "gung-cell" + (isSegung ? " is-segung" : "");
         cell.dataset.gungNum = gungNum;
+        const pmKey  = palmunBoard[gungNum] || "";
+        const pmInfo = pmKey ? (PALMUN[pmKey] || { label: pmKey, score: 50 }) : null;
+        const pmClass = pmInfo
+          ? (pmInfo.score >= 80 ? "palmun-gil" : pmInfo.score >= 50 ? "palmun-mid" : "palmun-흉")
+          : "";
+
         cell.innerHTML = `
           <span class="score-badge badge-${rel.badge}">${rel.badge}</span>
           <span class="gung-hanja">${g.gungInfo.hanja}</span>
@@ -330,6 +345,7 @@
           <span class="gung-num">${g.jibansu}</span>
           <span class="gung-cheonban">天 ${g.cheonbansu}</span>
           <span class="gung-keyword">${g.gungInfo.desc}</span>
+          ${pmInfo ? `<span class="palmun-badge ${pmClass}">${pmInfo.label.replace(/\(.*\)/,"")}</span>` : ""}
           <div class="score-bar-wrap" style="width:100%; margin-top:4px;">
             <div class="score-bar ${scoreClass}" style="width:${rel.score}%"></div>
           </div>
@@ -395,6 +411,18 @@
       document.getElementById("detailCheon").textContent    = g.cheonbansu;
       document.getElementById("detailRelation").textContent = g.relation.label;
       document.getElementById("detailScore").textContent    = g.relation.score + "점";
+
+      // 팔문 행
+      const pmKey2   = palmunBoard[g.gungNum] || "";
+      const pmInfo2  = pmKey2 ? (PALMUN[pmKey2] || null) : null;
+      const pmRowEl  = document.getElementById("detailPalmunRow");
+      const pmValEl  = document.getElementById("detailPalmun");
+      if (pmInfo2) {
+        pmRowEl.style.display = "";
+        pmValEl.textContent   = pmInfo2.label + "  —  " + pmInfo2.desc;
+      } else {
+        pmRowEl.style.display = "none";
+      }
 
       // ① 궁 고유 해설 — 이 자리는 어떤 기운인가
       document.getElementById("detailDesc").textContent = gm.life || g.gungInfo.desc;
