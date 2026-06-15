@@ -144,3 +144,23 @@ const PALMUN = {
   절체: { label: "절체(絶體)", score: 15, desc: "막힘·차단. 큰일 금물." },
   절명: { label: "절명(絶命)", score: 5,  desc: "최흉방. 이동·건축·계약 절대 금지." },
 };
+
+// ── 팔문 배속 함수 ────────────────────────────────
+// 세궁(世宮)을 기준으로 낙서 순방향에 팔문 8개 배속
+// 나머지 1궁 = 복위(안정·중립)
+const PALMUN_ORDER = ["생기","복덕","천의","유혼","화해","귀혼","절체","절명"];
+
+function buildPalmunBoard(segungIndex) {
+  const startIdx = NAKSEO_PATH.indexOf(segungIndex);
+  const palmunBoard = {};
+
+  for (let i = 0; i < 8; i++) {
+    const gungNum = NAKSEO_PATH[(startIdx + i) % 9];
+    palmunBoard[gungNum] = PALMUN_ORDER[i];
+  }
+  // 8문 배속 후 남는 1궁 = 복위
+  const lastGung = NAKSEO_PATH[(startIdx + 8) % 9];
+  palmunBoard[lastGung] = "복위";
+
+  return palmunBoard;
+}
