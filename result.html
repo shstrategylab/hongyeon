@@ -292,7 +292,7 @@
         <div class="detail-gung-life mt-8" id="detailDesc">-</div>
         <!-- ② 천반·지반 관계 해설 -->
         <div class="detail-relation-desc mt-8" id="detailExtra">-</div>
-        <!-- ③ ↳ 부연설명 -->
+        <!-- ③ 부연설명 -->
         <div class="summary-item-detail mt-8" id="detailSub" style="display:none"></div>
       </div>
     </div>
@@ -387,7 +387,7 @@
         // 관계 요약
         document.getElementById("ssRelation").innerHTML =
           `<strong>${sr.label}</strong> · ${sr.score}점 &nbsp;—&nbsp; ${sr.desc}` +
-          (sr.detail ? `<br><span style="opacity:.8">↳ ${sr.detail}</span>` : "");
+          (sr.detail ? `<br><span style="opacity:.8">${sr.detail}</span>` : "");
       }
 
       // 팔문 배속
@@ -532,7 +532,6 @@
             <div class="summary-item-desc">${g.relation.desc}</div>
             ${g.relation.detail ? `
             <div class="summary-item-detail">
-              <span class="summary-item-detail-arrow">↳</span>
               <span>${g.relation.detail}</span>
             </div>` : ""}
             ${(g.sinsal && g.sinsal.length > 0) ? `
@@ -599,12 +598,11 @@
       const extraEl = document.getElementById("detailExtra");
       extraEl.textContent = g.relation.desc;
 
-      // ③ ↳ 부연설명
+      // ③ 부연설명
       const subEl = document.getElementById("detailSub");
       if (g.relation.detail) {
         subEl.style.display = "flex";
-        subEl.innerHTML =
-          '<span class="summary-item-detail-arrow">↳</span><span>' + g.relation.detail + '</span>';
+        subEl.innerHTML = '<span>' + g.relation.detail + '</span>';
       } else {
         subEl.style.display = "none";
         subEl.innerHTML = "";
@@ -619,7 +617,7 @@
           <div class="sinsal-detail-block">
             <strong>${s.symbol || "⚡"} ${s.label} — ${s.severity}</strong>
             ${s.desc}<br>
-            <span style="opacity:.8; font-size:11px;">↳ ${s.detail}</span>
+            <span style="opacity:.8; font-size:11px;">${s.detail}</span>
           </div>`).join("");
       } else {
         sinsalWrap.style.display = "none";
