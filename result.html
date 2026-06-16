@@ -130,6 +130,64 @@
       word-break: keep-all;
     }
 
+    /* ── 상세 패널 내부 ── */
+    .detail-gung-life {
+      font-size: 13px;
+      color: var(--text-main);
+      line-height: 1.8;
+      padding: 10px 12px;
+      background: rgba(180,140,80,0.05);
+      border-left: 2px solid rgba(180,140,80,0.4);
+      border-radius: 0 4px 4px 0;
+    }
+    .detail-relation-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    /* ── 동처 하이라이트 ── */
+    .gung-cell.is-dongcheo {
+      border-color: rgba(220, 180, 60, 0.8) !important;
+      box-shadow: 0 0 14px rgba(220, 180, 60, 0.25), inset 0 0 8px rgba(220,180,60,0.06);
+      animation: dongcheo-pulse 2s ease-in-out infinite;
+    }
+    @keyframes dongcheo-pulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(220,180,60,0.2); }
+      50%       { box-shadow: 0 0 22px rgba(220,180,60,0.45); }
+    }
+    .dongcheo-badge {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(220,180,60,0.18);
+      border: 1px solid rgba(220,180,60,0.5);
+      color: #ddb840;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    .dongcheo-summary {
+      background: rgba(220,180,60,0.06);
+      border: 1px solid rgba(220,180,60,0.25);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .dongcheo-summary-title {
+      font-size: 13px;
+      color: #ddb840;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+    }
+
     /* ── 신살 배지 ── */
     .sinsal-badge {
       font-size: 9px;
@@ -158,20 +216,6 @@
       margin-top: 6px;
     }
     .sinsal-detail-block strong { color: #e07060; display: block; margin-bottom: 3px; }
-    .detail-gung-life {
-      font-size: 13px;
-      color: var(--text-main);
-      line-height: 1.8;
-      padding: 10px 12px;
-      background: rgba(180,140,80,0.05);
-      border-left: 2px solid rgba(180,140,80,0.4);
-      border-radius: 0 4px 4px 0;
-    }
-    .detail-relation-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.75;
-    }
   </style>
 </head>
 <body>
@@ -212,6 +256,12 @@
         </div>
       </div>
 
+      <!-- 동처 분석 요약 -->
+      <div class="dongcheo-summary" id="dongcheoSummary" style="display:none;">
+        <div class="dongcheo-summary-title">⚡ 동처(動處) — 지금 가장 활성화된 방위</div>
+        <div id="dongcheoText"></div>
+      </div>
+
       <div class="gugung-grid" id="gugungGrid"></div>
 
       <!-- 클릭 시 상세 표시 -->
@@ -244,11 +294,6 @@
         <div class="detail-relation-desc mt-8" id="detailExtra">-</div>
         <!-- ③ ↳ 부연설명 -->
         <div class="summary-item-detail mt-8" id="detailSub" style="display:none"></div>
-        <!-- ④ 신살 -->
-        <div id="detailSinsalWrap" style="display:none; margin-top:8px;">
-          <div style="font-size:12px; color:#e07060; margin-bottom:4px;">⚡ 발동 신살</div>
-          <div id="detailSinsalList"></div>
-        </div>
       </div>
     </div>
 
@@ -345,8 +390,49 @@
         ? buildPalmunBoard(analysis.segungIndex)
         : {};
 
+      // ── 동처(動處) 분석 ──────────────────────────
+      // 각 궁의 활성도 점수 계산
+      function calcDongcheoScore(g) {
+        let score = 0;
+        // 천극지 — 에너지 충돌 최강
+        if (g.relation.label.includes("천극지")) score += 40;
+        else if (g.relation.label.includes("지극천")) score += 25;
+        else if (g.relation.label.includes("천생지")) score += 20;
+        else if (g.relation.label.includes("지생천")) score += 15;
+        // 팔문 극단값
+        const pmScore = g.palmun?.score ?? 50;
+        if (pmScore <= 5)  score += 35;  // 절명
+        else if (pmScore <= 15) score += 28; // 절체
+        else if (pmScore >= 95) score += 25; // 생기
+        // 신살 발동
+        score += (g.sinsal || []).length * 20;
+        // 세궁 제외
+        if (g.isSegung) score = 0;
+        return score;
+      }
+
+      const dongcheoScores = Object.values(board)
+        .map(g => ({ g, score: calcDongcheoScore(g) }))
+        .filter(d => d.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      const topDongcheo = dongcheoScores.slice(0, 2); // 상위 2개
+      const dongcheoNums = new Set(topDongcheo.map(d => d.g.gungNum));
+
+      // 동처 요약 카드 렌더링
+      if (topDongcheo.length > 0) {
+        document.getElementById("dongcheoSummary").style.display = "block";
+        document.getElementById("dongcheoText").innerHTML = topDongcheo.map(({ g, score }) => {
+          const reasons = [];
+          if (g.relation.label.includes("극")) reasons.push(`${g.relation.label} 충돌`);
+          if (g.palmun?.score <= 15) reasons.push(`${g.palmun.label} 발동`);
+          if (g.palmun?.score >= 95) reasons.push(`${g.palmun.label} 발동`);
+          if (g.sinsal?.length) reasons.push(g.sinsal.map(s => s.label).join("·"));
+          return `<strong style="color:#ddb840">${g.gungInfo.name}(${g.gungInfo.direction})</strong> — ${reasons.join(", ")}`;
+        }).join("<br>");
+      }
+
       // 구궁도 그리드 렌더링
-      // CSS Grid 전통 방위 순서: [4,9,2 / 3,5,7 / 8,1,6]
       const gridOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
       const grid = document.getElementById("gugungGrid");
       grid.innerHTML = "";
@@ -356,14 +442,18 @@
         if (!g) return;
 
         const rel = g.relation;
-        const isSegung = g.isSegung || gungNum === analysis.segungIndex;
+        const isSegung   = g.isSegung || gungNum === analysis.segungIndex;
+        const isDongcheo = dongcheoNums.has(gungNum);
         const scoreClass =
           rel.score >= 80 ? "high" :
           rel.score >= 40 ? "mid" : "low";
 
         const cell = document.createElement("div");
-        cell.className = "gung-cell" + (isSegung ? " is-segung" : "");
+        cell.className = "gung-cell"
+          + (isSegung   ? " is-segung"   : "")
+          + (isDongcheo ? " is-dongcheo" : "");
         cell.dataset.gungNum = gungNum;
+
         const pmKey  = palmunBoard[gungNum] || "";
         const pmInfo = pmKey ? (PALMUN[pmKey] || { label: pmKey, score: 50 }) : null;
         const pmClass = pmInfo
@@ -381,6 +471,7 @@
           ${(g.sinsal && g.sinsal.length > 0)
             ? `<div class="sinsal-list">${g.sinsal.map(s => `<span class="sinsal-badge">${s.symbol || "⚡"}${s.label.replace(/\(.*\)/,"")}</span>`).join("")}</div>`
             : ""}
+          ${isDongcheo ? `<span class="dongcheo-badge">⚡동처</span>` : ""}
           <div class="score-bar-wrap" style="width:100%; margin-top:4px;">
             <div class="score-bar ${scoreClass}" style="width:${rel.score}%"></div>
           </div>
@@ -435,9 +526,12 @@
 
       const gm = GUNG_MEANING[g.gungNum] || {};
 
-      // 제목
+      // 제목 (세궁·동처 표시)
+      const isDc = dongcheoNums.has(g.gungNum);
       document.getElementById("detailTitle").textContent =
-        g.gungInfo.name + (isSegung ? " ★ 세궁(나의 방)" : "");
+        g.gungInfo.name
+        + (isSegung ? " ★ 세궁(나의 방)" : "")
+        + (isDc     ? " ⚡ 동처(활성)" : "");
 
       // 메타 행
       document.getElementById("detailDir").textContent      = g.gungInfo.direction;
@@ -459,14 +553,14 @@
         pmRowEl.style.display = "none";
       }
 
-      // ① 궁 고유 해설 — 이 자리는 어떤 기운인가
+      // ① 궁 고유 해설
       document.getElementById("detailDesc").textContent = gm.life || g.gungInfo.desc;
 
-      // ② 천반·지반 관계 해설 + ↳ 부연
+      // ② 천반·지반 관계 해설
       const extraEl = document.getElementById("detailExtra");
       extraEl.textContent = g.relation.desc;
 
-      // ③ ↳ 부연설명 — 별도 블록
+      // ③ ↳ 부연설명
       const subEl = document.getElementById("detailSub");
       if (g.relation.detail) {
         subEl.style.display = "flex";
