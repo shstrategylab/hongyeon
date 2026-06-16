@@ -135,13 +135,11 @@
       <div id="premiumContent"></div>
     </div>
 
-    <!-- 흐릿한 미리보기 -->
+    <!-- 흐릿한 미리보기 (동적 렌더링) -->
     <div class="card" id="blurPreview">
       <div class="card-title">풀이 미리보기</div>
-      <div class="paywall-blur">
-        당신의 동쪽 진궁(震宮)은 편재(큰돈) 방입니다. 현재 천생지(90점) 구조로
-        하늘이 재물을 밀어주는 형국입니다. 이번 달 투자나 사업 확장의 타이밍이
-        열려 있습니다. 서쪽 태궁(兌宮)은 직장·명예 관련 정관 방으로...
+      <div class="paywall-blur" id="blurText">
+        포국 데이터를 불러오는 중...
       </div>
     </div>
 
@@ -175,6 +173,7 @@
       }
 
       renderFreeContent();
+      renderBlurPreview();
 
       // 결제 상태 확인
       isPaid = await checkPremiumStatus();
@@ -219,6 +218,40 @@
           <span>${rel.detail}</span>
         </div>` : ""}
       `;
+    }
+
+    // ── 블러 미리보기 동적 렌더링 ─────────────────
+    // 실제 포국 결과에서 길방 1위 + 흉방 1위를 뽑아
+    // 사용자별 맞춤 미리보기 텍스트를 생성합니다.
+    function renderBlurPreview() {
+      const { analysis, board, giljung } = result;
+      const gj = giljung || deriveGiljung(board, analysis.segungIndex);
+
+      // 길방 1위
+      const topGil = gj.gilbang[0];
+      // 흉방 1위
+      const topHyung = gj.hyungbang[0];
+
+      if (!topGil || !topHyung) return;
+
+      const gilGung   = board[topGil.gungNum];
+      const hyungGung = board[topHyung.gungNum];
+
+      // 신살 경고 문구
+      const sinsalWarn = hyungGung.sinsal?.length
+        ? ` 특히 ${hyungGung.sinsal.map(s => s.label).join("·")}이 발동 중이니 각별히 주의하세요.`
+        : "";
+
+      const previewText =
+        `당신의 ${topGil.direction} ${topGil.name}은 현재 ` +
+        `${gilGung.palmun?.label || topGil.palmunLabel}(${gilGung.palmun?.score ?? ""}점) 구조로 ` +
+        `${gilGung.relation.summary} 가장 활성화된 길방입니다. ` +
+        `${gilGung.relation.desc} ` +
+        `반면 ${topHyung.direction} ${topHyung.name}은 ` +
+        `${hyungGung.palmun?.label || topHyung.palmunLabel} · ${hyungGung.relation.label} 흉방으로` +
+        `${sinsalWarn} 이 방위의 이동·계약·투자는 피하시고...`;
+
+      document.getElementById("blurText").textContent = previewText;
     }
 
     function showPremium() {
