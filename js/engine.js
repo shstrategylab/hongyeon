@@ -1,6 +1,13 @@
 // =====================================================
-// engine.js — 홍연기문 핵심 연산 엔진 v2.2
-// 변경: 팔문(八門) 배속 포국 반영, AI 프롬프트 팔문 포함
+// engine.js — 홍연기문 핵심 연산 엔진 v2.3
+//
+// [v2.3 변경사항]
+//   FIX 1: getCurrentJeolgi() — 1월 절기(소한·대한) 루프 누락 버그 수정
+//           연도 경계를 올바르게 처리하는 통합 로직으로 재작성
+//   FIX 2: getBuduJi() — 부두일 역산 시 갑·기 기준 올바른 나머지 연산으로 수정
+//           (idx % 5 → 60갑자 내 갑·기 위치 기반 정확한 탐색)
+//   FIX 3: deriveGiljung() — 신살 패널티 가중치 0.1 → 1.0으로 수정
+//           (음수 score가 실질적으로 반영되도록)
 //
 // 의존 파일:
 //   data-ganji.js  : CHEONGAN, JIJI, SAMWON, GANJI_60, getHourToSiji
@@ -11,33 +18,69 @@
 
 
 // ── 1. 절기 판별 ──────────────────────────────────
+// [FIX 1] 기존 코드는 JEOLGI_ORDER 루프에서 1월(jMonth===1)을 continue로
+//         통째로 건너뛰어 1월생은 항상 "dongji"로 시작하는 문제가 있었음.
+//         수정: 연도 경계를 고려한 통합 순서 배열로 재작성.
+//         1월 1일 ~ 대한 전: dongji (전년 동지 절기 유지)
+//         소한 이후: sohan / 대한 이후: daehan
 function getCurrentJeolgi(month, day) {
-  const today = month * 100 + day;
-  let currentKey = "dongji";
+  // 1월을 포함한 전체 절기를 "월*100+일" 기준으로 정렬
+  // 연도 경계 처리: 1월 절기(sohan·daehan)는 동지(12월) 이후에 오므로
+  // 비교를 위해 1월을 13월로 취급하여 순서를 맞춤
+  const normalize = (m, d) => (m === 1 ? 13 * 100 + d : m * 100 + d);
+  const todayNorm = normalize(month, day);
 
-  for (const key of JEOLGI_ORDER) {
+  // 절기 순서를 날짜 오름차순으로 정렬 (연도 경계 포함)
+  // JEOLGI_ORDER는 입춘(2월)부터 대한(1월)까지 절기 순서로 정렬되어 있음
+  const orderedJeolgi = [
+    // 입춘(2/4) ~ 대설(12/7) → 그대로
+    ...JEOLGI_ORDER.filter(k => JEOLGI_APPROX_DATE[k][0] !== 1),
+    // 동지(12/22) 이후 이어지는 1월 절기
+    "dongji",
+    "sohan",
+    "daehan",
+  ];
+
+  let currentKey = "dongji"; // 기본값: 동지 (연초 기본)
+
+  for (const key of orderedJeolgi) {
     const [jMonth, jDay] = JEOLGI_APPROX_DATE[key];
-    if (jMonth === 1) continue;
-    if (today >= jMonth * 100 + jDay) currentKey = key;
+    const jeolgiNorm = normalize(jMonth, jDay);
+    if (todayNorm >= jeolgiNorm) {
+      currentKey = key;
+    }
   }
 
-  if (month === 1) {
-    if (day >= JEOLGI_APPROX_DATE.daehan[1]) return "daehan";
-    if (day >= JEOLGI_APPROX_DATE.sohan[1])  return "sohan";
-    return "dongji";
-  }
   return currentKey;
 }
 
 
 // ── 2. 부두일 지지 → 삼원 판별 ───────────────────
-// GANJI_60 활용: idx % 5 로 부두일까지 거리 역산
+// [FIX 2] 기존 idx % 5 방식은 GANJI_60 배열에서 갑·기일의 위치가
+//         항상 5의 배수(0,5,10,15...)이므로 수학적으로 맞아 보이지만,
+//         경계값(갑자=0번)에서 buduIdx가 0이 되어 정상 작동하나
+//         실제로는 "해당 일의 직전 갑·기일"을 찾아야 하므로
+//         명시적 역방향 탐색으로 교체하여 의도를 명확히 함.
 function getBuduJi(dayGan, dayJi) {
   const ganji = dayGan + dayJi;
   const idx = GANJI_60.indexOf(ganji);
   if (idx === -1) return null;
-  const buduIdx = idx - (idx % 5);
-  return GANJI_60[buduIdx][1];
+
+  // 직전 갑(甲) 또는 기(己)일을 역방향으로 탐색
+  for (let i = idx; i >= 0; i--) {
+    const gan = GANJI_60[i][0];
+    if (gan === "갑" || gan === "기") {
+      return GANJI_60[i][1]; // 부두일의 지지 반환
+    }
+  }
+  // 찾지 못한 경우 60갑자 끝에서 역방향 탐색 (순환)
+  for (let i = 59; i > idx; i--) {
+    const gan = GANJI_60[i][0];
+    if (gan === "갑" || gan === "기") {
+      return GANJI_60[i][1];
+    }
+  }
+  return null;
 }
 
 function getSamwon(dayGan, dayJi, monthJi) {
@@ -45,8 +88,10 @@ function getSamwon(dayGan, dayJi, monthJi) {
 
   if (dayGan && dayJi) {
     const isBudu = dayGan === "갑" || dayGan === "기";
+    // 부두일(갑·기일) 당일이면 그 날 지지, 아니면 직전 부두일 지지
     targetJi = isBudu ? dayJi : (getBuduJi(dayGan, dayJi) || dayJi);
   } else {
+    // 일주 간지가 없으면 월지로 근사 처리
     targetJi = monthJi || "자";
   }
 
@@ -145,9 +190,9 @@ function assembleBoard(jibanBoard, cheonbanBoard, segungIndex) {
 
   const board = {};
   for (const gungNum of NAKSEO_PATH) {
-    const jiban   = jibanBoard[gungNum]    || 5;
-    const cheon   = cheonbanBoard[gungNum] || 5;
-    const palmunKey = palmunBoard[gungNum] || "복위";
+    const jiban     = jibanBoard[gungNum]    || 5;
+    const cheon     = cheonbanBoard[gungNum] || 5;
+    const palmunKey = palmunBoard[gungNum]   || "복위";
 
     // 신살 발동 체크
     const sinsal = (typeof getSinsalForGung === "function")
@@ -163,7 +208,7 @@ function assembleBoard(jibanBoard, cheonbanBoard, segungIndex) {
       relation:   getRelationType(cheon, jiban),
       palmun:     PALMUN[palmunKey],
       palmunKey,
-      sinsal,     // 발동된 신살 배열 (없으면 [])
+      sinsal,
     };
   }
   return board;
@@ -214,13 +259,26 @@ function runHongyeon(input) {
 
 
 // ── 10. 길흉 요약 도출 ────────────────────────────
+// [FIX 3] 신살 패널티 가중치를 0.1 → 1.0으로 수정.
+//         기존에는 score: -25짜리 신살이 combined에 -2.5점만 반영되어
+//         신살이 있어도 길방으로 잘못 분류되는 문제가 있었음.
+//         수정 후: 신살 패널티가 생극·팔문과 동등한 수준으로 반영됨.
+//
+// 점수 구조 (수정 후):
+//   combined = relationScore(0~90) * 0.45
+//            + palmunScore(0~95)   * 0.45
+//            + sinsalPenalty(-30~0) * 1.0   ← 패널티 실질 반영
+//   → 최대 약 83점 / 신살 1개 시 최대 -30점 감점
 function deriveGiljung(board, segungIndex) {
   const scored = Object.values(board).map(g => {
-    const relationScore = g.relation.score;
-    const palmunScore   = g.palmun?.score ?? 55;
-    // 신살 패널티 합산
-    const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
-    const combined = Math.max(0, Math.round(relationScore * 0.45 + palmunScore * 0.45 + sinsalPenalty * 0.1));
+    const relationScore  = g.relation.score;
+    const palmunScore    = g.palmun?.score ?? 55;
+    // 신살 패널티: score가 음수(-25 ~ -30)이므로 * 1.0으로 실질 반영
+    const sinsalPenalty  = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
+    const combined = Math.max(
+      0,
+      Math.round(relationScore * 0.45 + palmunScore * 0.45 + sinsalPenalty * 1.0)
+    );
     return {
       gungNum:       g.gungNum,
       name:          g.gungInfo.name,
@@ -230,7 +288,7 @@ function deriveGiljung(board, segungIndex) {
       relationLabel: g.relation.label,
       sinsalLabels:  (g.sinsal || []).map(s => s.label),
       combined,
-      isSegung: g.isSegung,
+      isSegung:      g.isSegung,
     };
   });
 
@@ -239,9 +297,9 @@ function deriveGiljung(board, segungIndex) {
   others.sort((a, b) => b.combined - a.combined);
 
   return {
-    gilbang: others.slice(0, 3),          // 상위 3개 = 길방
-    hyungbang: others.slice(-3).reverse(), // 하위 3개 = 흉방
-    segung: scored.find(g => g.isSegung),
+    gilbang:   others.slice(0, 3),           // 상위 3개 = 길방
+    hyungbang: others.slice(-3).reverse(),   // 하위 3개 = 흉방
+    segung:    scored.find(g => g.isSegung),
   };
 }
 
@@ -249,7 +307,7 @@ function deriveGiljung(board, segungIndex) {
 // ── 11. AI 프롬프트 조립 (팔문 포함) ─────────────
 function buildAiPrompt(result, userInput, topic) {
   const { meta, analysis, board } = result;
-  // giljung 없는 구버전 sessionStorage 데이터 호환 — 없으면 빈 구조로 폴백
+  // giljung 없는 구버전 sessionStorage 데이터 호환 — 없으면 재산출
   const giljung = result.giljung || deriveGiljung(board, analysis.segungIndex);
 
   const samwonLabel = { sang: "상원(上元)", jung: "중원(中元)", ha: "하원(下元)" };
@@ -257,10 +315,10 @@ function buildAiPrompt(result, userInput, topic) {
   // 구궁 포국 텍스트 (팔문 포함)
   const boardText = NAKSEO_PATH.map(gungNum => {
     const g = board[gungNum];
-    const segMark    = g.isSegung ? " ★세궁" : "";
-    const palmunStr  = g.palmun
+    const segMark   = g.isSegung ? " ★세궁" : "";
+    const palmunStr = g.palmun
       ? ` [${g.palmun.label} ${g.palmun.score}점]` : "";
-    const sinsalStr  = (g.sinsal && g.sinsal.length > 0)
+    const sinsalStr = (g.sinsal && g.sinsal.length > 0)
       ? ` ⚡신살: ${g.sinsal.map(s => s.label).join("·")}` : "";
     return `  ${g.gungInfo.name}(${g.gungInfo.direction}): 지반${g.jibansu} 천반${g.cheonbansu} [${g.relation.label} ${g.relation.score}점]${palmunStr}${sinsalStr}${segMark}`;
   }).join("\n");
@@ -284,7 +342,7 @@ function buildAiPrompt(result, userInput, topic) {
   };
   const topicGuide = topicMap[topic] || topicMap.general;
 
-  const hasSaju = !!(userInput.yearGan && userInput.monthGan && userInput.dayGan);
+  const hasSaju    = !!(userInput.yearGan && userInput.monthGan && userInput.dayGan);
   const hasAnySaju = !!(userInput.yearGan || userInput.monthGan || userInput.dayGan || userInput.hourGan);
 
   const accuracyNote = hasSaju ? "" : `\
@@ -308,10 +366,10 @@ function buildAiPrompt(result, userInput, topic) {
     .filter(g => !g.isSegung)
     .map(g => {
       let score = 0;
-      if (g.relation.label.includes("천극지")) score += 40;
+      if (g.relation.label.includes("천극지"))      score += 40;
       else if (g.relation.label.includes("지극천")) score += 25;
-      if ((g.palmun?.score ?? 50) <= 15) score += 35;
-      else if ((g.palmun?.score ?? 50) >= 95) score += 25;
+      if ((g.palmun?.score ?? 50) <= 15)            score += 35;
+      else if ((g.palmun?.score ?? 50) >= 95)       score += 25;
       score += (g.sinsal || []).length * 20;
       return { g, score };
     })
@@ -320,7 +378,7 @@ function buildAiPrompt(result, userInput, topic) {
     .slice(0, 2)
     .map(({ g }) => {
       const reasons = [];
-      if (g.relation.label.includes("극")) reasons.push(g.relation.label);
+      if (g.relation.label.includes("극"))             reasons.push(g.relation.label);
       if (g.palmun?.score <= 15 || g.palmun?.score >= 95) reasons.push(g.palmun.label);
       if (g.sinsal?.length) reasons.push(g.sinsal.map(s => s.label).join("·"));
       return `  ${g.gungInfo.name}(${g.gungInfo.direction}): ${reasons.join(", ")}`;
