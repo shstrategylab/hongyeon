@@ -3,719 +3,1004 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>홍연 마스터 — 구궁도 결과</title>
+  <title>풀이 결과 — 하락이수</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .meta-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .meta-tag {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
-    .meta-tag span { color: var(--gold); }
-
-    .gung-detail {
-      display: none;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      margin-top: 16px;
-    }
-    .gung-detail.active { display: block; }
-    .gung-detail-title {
-      font-family: 'Noto Serif KR', serif;
-      font-size: 15px;
-      color: var(--gold);
-      margin-bottom: 12px;
-    }
-    .gung-detail-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      color: var(--text-muted);
-    }
-    .gung-detail-row:last-child { border-bottom: none; }
-    .gung-detail-row strong { color: var(--text-main); }
-
-    /* summary 스타일은 style.css로 이관 */
-
-    /* ── 세궁 해설 블록 ── */
-    .segung-summary {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-      background: rgba(180,140,80,0.05);
-      border: 1px solid rgba(180,140,80,0.2);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .segung-summary-left {
-      text-align: center;
-      background: var(--bg-card);
-      border: 1px solid var(--border-glow);
-      border-radius: 8px;
-      padding: 12px 18px;
-      flex-shrink: 0;
-    }
-    .segung-num {
-      font-family: 'Noto Serif KR', serif;
-      font-size: 30px;
-      color: var(--gold);
-      line-height: 1;
-    }
-    .segung-gung-name {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      white-space: nowrap;
-    }
-    .segung-summary-right {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-    }
-    .segung-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
-    .segung-desc {
-      font-size: 13px;
-      color: var(--text-main);
-      line-height: 1.75;
-    }
-    .segung-relation {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.7;
-      padding: 7px 11px;
-      background: rgba(255,255,255,0.025);
-      border-left: 2px solid rgba(180,140,80,0.35);
-      border-radius: 0 4px 4px 0;
-    }
-    .segung-relation strong { color: var(--gold); font-weight: 600; }
-
-    /* ── 구궁 셀 추가 요소 ── */
-    .gung-cell .gung-hanja {
-      font-family: 'Noto Serif KR', serif;
-      font-size: 15px;
-      color: rgba(200,169,110,0.28);
-      position: absolute;
-      top: 7px;
-      left: 8px;
-      line-height: 1;
-    }
-    .gung-cell .gung-keyword {
-      font-size: 10px;
-      color: var(--text-muted);
-      letter-spacing: 0.02em;
-      line-height: 1.35;
-      margin-top: 2px;
-      opacity: 0.85;
-      word-break: keep-all;
-    }
-
-    /* ── 상세 패널 내부 ── */
-    .detail-gung-life {
-      font-size: 13px;
-      color: var(--text-main);
-      line-height: 1.8;
-      padding: 10px 12px;
-      background: rgba(180,140,80,0.05);
-      border-left: 2px solid rgba(180,140,80,0.4);
-      border-radius: 0 4px 4px 0;
-    }
-    .detail-relation-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.75;
-    }
-
-    /* ── 동처 하이라이트 ── */
-    .gung-cell.is-dongcheo {
-      border-color: rgba(220, 180, 60, 0.8) !important;
-      box-shadow: 0 0 14px rgba(220, 180, 60, 0.25), inset 0 0 8px rgba(220,180,60,0.06);
-      animation: dongcheo-pulse 2s ease-in-out infinite;
-    }
-    @keyframes dongcheo-pulse {
-      0%, 100% { box-shadow: 0 0 10px rgba(220,180,60,0.2); }
-      50%       { box-shadow: 0 0 22px rgba(220,180,60,0.45); }
-    }
-    .dongcheo-badge {
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 8px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(220,180,60,0.18);
-      border: 1px solid rgba(220,180,60,0.5);
-      color: #ddb840;
-      white-space: nowrap;
-      letter-spacing: 0.03em;
-    }
-    .dongcheo-summary {
-      background: rgba(220,180,60,0.06);
-      border: 1px solid rgba(220,180,60,0.25);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.8;
-    }
-    .dongcheo-summary-title {
-      font-size: 13px;
-      color: #ddb840;
-      font-weight: 600;
-      margin-bottom: 6px;
-      letter-spacing: 0.05em;
-    }
-
-    /* ── 신살 배지 ── */
-    .sinsal-badge {
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(180, 50, 30, 0.2);
-      border: 1px solid rgba(200, 60, 40, 0.4);
-      color: #e07060;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-    }
-    .sinsal-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-    .sinsal-detail-block {
-      background: rgba(180,50,30,0.07);
-      border-left: 2px solid rgba(200,60,40,0.4);
-      border-radius: 0 4px 4px 0;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: #c87060;
-      line-height: 1.75;
-      margin-top: 6px;
-    }
-    .sinsal-detail-block strong { color: #e07060; display: block; margin-bottom: 3px; }
-
-    /* ── 방위 토글 버튼 ── */
-    .map-toggle-btn {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 11px;
-      padding: 5px 12px;
-      transition: all 0.2s;
-    }
-    .map-toggle-btn:hover, .map-toggle-btn.active {
-      border-color: var(--border-glow);
-      color: var(--gold);
-      background: rgba(180, 140, 80, 0.08);
-    }
-  </style>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
 
-  <script src="js/header.js"></script>
+<header class="site-header">
+  <a href="index.html" class="site-logo">河洛理數</a>
+  <nav class="site-nav">
+    <a href="input.html">← 다시 입력</a>
+    <a href="gua-dictionary.html">64괘 사전</a>
+  </nav>
+</header>
 
-  <main class="container">
+<!-- 로딩 -->
+<div id="loading-screen">
+  <div class="loading-spinner">☯</div>
+  <p style="color:var(--text-muted);">사주를 괘로 변환하는 중...</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;" id="loading-steps"></div>
+</div>
 
-    <!-- 메타 정보 -->
-    <div class="meta-bar" id="metaBar">
-      <div class="meta-tag">절기: <span id="jeolgiName">-</span></div>
-      <div class="meta-tag">구분: <span id="dunType">-</span></div>
-      <div class="meta-tag">국수: <span id="baseGuksu">-</span>국</div>
-      <div class="meta-tag">지반수: <span id="jibansu">-</span></div>
-      <div class="meta-tag">천반수: <span id="cheonbansu">-</span></div>
+<!-- 결과 -->
+<div id="result-wrap" style="display:none;" class="container">
+
+  <!-- 사주 배너 -->
+  <div class="card" id="saju-banner" style="margin-bottom:24px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;"></div>
+
+  <!-- 탭 -->
+  <div class="tabs" id="tab-bar"></div>
+
+  <!-- 탭 패널들 -->
+  <div id="tab-overview"   class="tab-panel"></div>
+  <div id="tab-seoncheon" class="tab-panel" style="display:none;"></div>
+  <div id="tab-hucheon"   class="tab-panel" style="display:none;"></div>
+  <div id="tab-yunnyeon"  class="tab-panel" style="display:none;"></div>
+  <div id="tab-timeline"  class="tab-panel" style="display:none;"></div>
+  <div id="tab-events"    class="tab-panel" style="display:none;"></div>
+  <div id="tab-suri"      class="tab-panel" style="display:none;"></div>
+</div>
+
+<script src="js/harakisu.js"></script>
+<script src="js/prompt.js"></script>
+<script>
+const TABS = [
+  { id:'overview',   label:'개요' },
+  { id:'seoncheon', label:'선천괘' },
+  { id:'hucheon',   label:'후천괘' },
+  { id:'yunnyeon',  label:'올해 운' },
+  { id:'timeline',  label:'대운 흐름' },
+  { id:'events',    label:'선후천 분석' },
+  { id:'suri',      label:'수리 계산' },
+];
+
+// 로딩 스텝 표시
+const steps = ['천간수 변환','지지수 변환','선천괘 도출','원당효 계산','후천괘 도출'];
+steps.forEach((s,i) => {
+  const span = document.createElement('span');
+  span.textContent = s;
+  span.style.cssText = `font-size:.75rem;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text-muted);animation:fadeIn .4s ease ${i*.2}s both;`;
+  document.getElementById('loading-steps').appendChild(span);
+});
+
+// 탭 렌더
+const tabBar = document.getElementById('tab-bar');
+TABS.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (t.id === 'overview' ? ' active' : '');
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabBar.appendChild(btn);
+});
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${id}`).style.display = 'block';
+  document.querySelector(`button[onclick="switchTab('${id}')"]`)?.classList.add('active');
+}
+// tabBar 버튼에 onclick 연결
+tabBar.querySelectorAll('.tab-btn').forEach((btn,i) => {
+  btn.setAttribute('onclick', `switchTab('${TABS[i].id}')`);
+});
+
+// ── 안내 박스 ─────────────────────────────────────────────
+function infoBox(text) {
+  return `<div style="background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:.83rem;color:var(--text-muted);line-height:1.8;">${text}</div>`;
+}
+
+// ── 결과 렌더링 함수들 ─────────────────────────────────────
+function guaCard(gua, lines, highlightPos, badge, extra='') {
+  return `
+  <div class="card" style="flex:1;min-width:240px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+      <span style="font-size:.75rem;color:var(--text-muted);">${gua._label||''}</span>
+      ${badge ? `<span style="font-size:.7rem;background:rgba(124,58,237,.2);color:var(--accent-light);padding:2px 8px;border-radius:20px;">${badge}</span>` : ''}
     </div>
-
-    <!-- 경고 메시지 -->
-    <div id="warnBox" style="display:none; background:rgba(180,140,80,0.08);
-      border:1px solid var(--border-glow); border-radius:8px;
-      padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--gold);">
-    </div>
-
-    <!-- 구궁도 -->
-    <div class="card">
-      <div class="card-title">구궁도 (세궁: <span id="segungLabel" class="text-gold">-</span>)</div>
-
-      <!-- 방위 배열 토글 -->
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-        <span style="font-size:11px; color:var(--text-muted);">방위 배열:</span>
-        <button class="map-toggle-btn active" id="btnTraditional" onclick="setMapMode('traditional')">🧭 전통 역술 (남↑)</button>
-        <button class="map-toggle-btn" id="btnModern" onclick="setMapMode('modern')">🗺️ 현대 지도 (북↑)</button>
-        <span id="mapModeDesc" style="font-size:11px; color:var(--text-dim); margin-left:4px;">황제가 남쪽을 바라보는 전통 방식</span>
-      </div>
-
-      <!-- 세궁 해설 -->
-      <div class="segung-summary" id="segungSummary">
-        <div class="segung-summary-left">
-          <div class="segung-num" id="ssNum">-</div>
-          <div class="segung-gung-name" id="ssGungName">-</div>
-        </div>
-        <div class="segung-summary-right">
-          <div class="segung-meta" id="ssMeta">-</div>
-          <div class="segung-desc" id="ssDesc">-</div>
-          <div class="segung-relation" id="ssRelation"></div>
-        </div>
-      </div>
-
-      <!-- 동처 분석 요약 -->
-      <div class="dongcheo-summary" id="dongcheoSummary" style="display:none;">
-        <div class="dongcheo-summary-title">⚡ 동처(動處) — 지금 가장 활성화된 방위</div>
-        <div id="dongcheoText"></div>
-      </div>
-
-      <!-- 나침반 라벨 -->
-      <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:4px; letter-spacing:0.05em;">
-        <span id="compassTop">南 ↑</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:4px;">
-        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">東</span>
-        <div class="gugung-grid" id="gugungGrid" style="flex:1;"></div>
-        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">西</span>
-      </div>
-      <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:0.05em;">
-        <span id="compassBottom">↓ 北</span>
-      </div>
-
-      <!-- 클릭 시 상세 표시 -->
-      <div class="gung-detail" id="gungDetail">
-        <div class="gung-detail-title" id="detailTitle">—</div>
-        <div class="gung-detail-row">
-          <span>방위</span><strong id="detailDir">-</strong>
-        </div>
-        <div class="gung-detail-row">
-          <span>오행</span><strong id="detailOhaeng">-</strong>
-        </div>
-        <div class="gung-detail-row">
-          <span>지반수</span><strong id="detailJiban">-</strong>
-        </div>
-        <div class="gung-detail-row">
-          <span>천반수</span><strong id="detailCheon">-</strong>
-        </div>
-        <div class="gung-detail-row">
-          <span>관계</span><strong id="detailRelation">-</strong>
-        </div>
-        <div class="gung-detail-row">
-          <span>운세 점수</span><strong id="detailScore">-</strong>
-        </div>
-        <div class="gung-detail-row" id="detailPalmunRow">
-          <span>팔문</span>
-          <span id="detailPalmun" style="text-align:right; max-width:70%; font-size:13px;">-</span>
-        </div>
-        <!-- ① 궁 고유 해설 -->
-        <div class="detail-gung-life mt-8" id="detailDesc">-</div>
-        <!-- ② 천반·지반 관계 해설 -->
-        <div class="detail-relation-desc mt-8" id="detailExtra">-</div>
-        <!-- ③ 부연설명 -->
-        <div class="summary-item-detail mt-8" id="detailSub" style="display:none"></div>
+    <div style="display:flex;gap:18px;align-items:center;margin-bottom:14px;">
+      ${Harakisu.renderYao(lines, highlightPos, 'sm')}
+      <div>
+        <div style="font-size:1.35rem;font-weight:800;">${gua.name||'—'}</div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;">${gua.guaNo}번괘</div>
       </div>
     </div>
+    ${gua.dansa ? `<p style="font-size:.85rem;color:var(--text-muted);line-height:1.7;border-top:1px solid var(--border);padding-top:12px;">${gua.dansa}</p>` : ''}
+    ${gua.practical ? `<p style="font-size:.82rem;color:var(--accent-light);line-height:1.6;margin-top:8px;">💡 ${gua.practical}</p>` : ''}
+    ${extra}
+  </div>`;
+}
 
-    <!-- 길흉 요약 -->
-    <div class="card">
-      <div class="card-title">길흉 요약</div>
-      <ul class="summary-list" id="summaryList"></ul>
+function detailCard(gua, lines, highlightPos, yao, subLabel) {
+  const rows = [
+    ['괘사(卦辭)', gua.dansa],
+    ['상전(象傳)', gua.sangjeon],
+    ['실용 해석', gua.practical],
+    ['주의사항',  gua.caution],
+  ].filter(r=>r[1]).map(([k,v])=>`
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;">
+      <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">${k}</p>
+      <p style="line-height:1.85;">${v}</p>
+    </div>`).join('');
+
+  const yaoBlock = yao?.text_ko ? `
+    <div class="card" style="border-color:var(--gold);margin-top:14px;">
+      <p style="font-size:.72rem;color:var(--gold);margin-bottom:8px;">${subLabel}</p>
+      <p style="font-weight:600;margin-bottom:6px;">${yao.text_ko}</p>
+      <p style="color:var(--text-muted);font-size:.9rem;line-height:1.7;">${yao.comment_ko||''}</p>
+    </div>` : '';
+
+  return `
+  <div class="card">
+    <div style="display:flex;gap:24px;align-items:center;margin-bottom:20px;">
+      ${Harakisu.renderYao(lines, highlightPos, 'lg')}
+      <div>
+        <p style="font-size:.75rem;color:var(--text-muted);">${gua._label||''}</p>
+        <h2 style="font-size:1.8rem;font-weight:800;">${gua.name||'—'}</h2>
+        <p style="color:var(--text-muted);font-size:.85rem;">${gua.guaNo}번괘</p>
+      </div>
     </div>
+    ${rows}
+  </div>
+  ${yaoBlock}`;
+}
 
-    <!-- 이동 버튼 -->
-    <div style="display: flex; gap: 10px; margin-bottom: 32px;">
-      <a href="premium.html" class="btn btn-secondary" style="text-decoration: none;">
-        🔒 심층 풀이 보기
-      </a>
-      <a href="prompt.html" class="btn btn-secondary" style="text-decoration: none;">
-        ✦ AI 프롬프트 생성
-      </a>
-    </div>
+function timelineHtml(tl, birthYear) {
+  const curYear = new Date().getFullYear();
+  const korAge  = curYear - birthYear + 1;
+  const cells   = tl.map(t => {
+    const isCur = korAge >= t.startAge && korAge <= t.endAge;
+    const bg    = isCur ? 'rgba(124,58,237,.12)' : t.isHc ? 'rgba(212,168,67,.05)' : 'transparent';
+    const topBar= isCur ? '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);"></div>' : '';
+    return `
+    <div style="position:relative;min-width:${t.years*14}px;padding:10px 8px;border-left:1px solid var(--border);background:${bg};">
+      ${topBar}
+      <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:5px;">${t.startAge}~${t.endAge}세</div>
+      ${Harakisu.renderYao([t.yang?1:0], null, 'sm')}
+      <div style="font-size:.68rem;margin-top:5px;font-weight:${isCur?700:400};color:${isCur?'var(--accent-light)':'var(--text-muted)'};">
+        ${t.gua}괘 ${t.yaoPos}효
+      </div>
+      <div style="font-size:.58rem;color:${t.yang?'#818cf8':'#f472b6'};margin-top:2px;">${t.yang?'양 9년':'음 6년'}</div>
+      ${t.isHc ? '<div style="font-size:.55rem;color:var(--gold);">후천</div>' : ''}
+    </div>`;
+  }).join('');
+  return `<div style="overflow-x:auto;padding-bottom:8px;"><div style="display:flex;min-width:max-content;">${cells}</div></div>`;
+}
 
-  </main>
+function timelineListHtml(tl, birthYear) {
+  const curYear = new Date().getFullYear();
+  const korAge  = curYear - birthYear + 1;
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  // 대운 시기별 인생 단계 레이블
+  function lifeStage(startAge) {
+    if (startAge <= 10)  return '유년기 · 기질 형성';
+    if (startAge <= 20)  return '청소년기 · 가능성 탐색';
+    if (startAge <= 30)  return '청년기 · 도전과 시작';
+    if (startAge <= 40)  return '장년 초반 · 성취와 확장';
+    if (startAge <= 50)  return '장년 중반 · 전환과 깊이';
+    if (startAge <= 60)  return '중년기 · 결실과 성숙';
+    if (startAge <= 70)  return '초로기 · 지혜와 정리';
+    return '노년기 · 완성과 회귀';
+  }
 
-  <script src="js/data-jeolgi.js"></script>
-  <script src="js/data-ganji.js"></script>
-  <script src="js/data-gugung.js"></script>
-  <script src="js/data-yukhin.js"></script>
-  <script src="js/engine.js"></script>
-  <script src="js/firebase.js"></script>
+  // 양효/음효 기운 설명
+  function yaoEnergy(yang) {
+    return yang
+      ? '양효(━) 구간 — 적극적·외향적 에너지가 강합니다. 도전·확장·표출의 시기입니다.'
+      : '음효(- -) 구간 — 수용적·내향적 에너지가 강합니다. 수렴·준비·내실의 시기입니다.';
+  }
 
-  <script>
-    // 저장된 결과 불러오기
-    const result = JSON.parse(sessionStorage.getItem("hongyeon_result") || "null");
-    let palmunBoard   = {};
-    let board         = {};
-    let analysis      = {};
-    let dongcheoNums  = new Set();
-    let combinedMap   = {};       // showDetail에서도 참조
-    let currentMapMode = 'traditional';
-    const GRID_TRADITIONAL = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-    const GRID_MODERN      = [8, 1, 6, 3, 5, 7, 4, 9, 2];
+  return tl.map(t => {
+    const isCur  = korAge >= t.startAge && korAge <= t.endAge;
+    const guaInfo = Harakisu.DB.dansa?.[t.gua] || Harakisu.DB.dansa?.[String(t.gua)] || {};
+    const yaoInfo = Harakisu.DB.yao?.[t.gua]?.lines?.[t.yaoPos]
+                 || Harakisu.DB.yao?.[String(t.gua)]?.lines?.[t.yaoPos] || {};
+    const guaLines = Harakisu.GUA_LINES[t.gua] || [];
 
-    // 방위 토글 — HTML onclick에서 직접 호출하므로 전역 함수로 선언
-    function setMapMode(mode) {
-      currentMapMode = mode;
-      document.getElementById('btnTraditional').classList.toggle('active', mode === 'traditional');
-      document.getElementById('btnModern').classList.toggle('active', mode === 'modern');
-      document.getElementById('mapModeDesc').textContent = mode === 'traditional'
-        ? '황제가 남쪽을 바라보는 전통 방식'
-        : '우리가 학교에서 배운 현대 지도 방식';
-      renderGrid();
-    }
+    return `
+    <div class="card" style="border-color:${isCur?'var(--accent)':'var(--border)'};background:${isCur?'rgba(124,58,237,.08)':'var(--surface)'};">
 
-    if (!result) {
-      alert("입력 데이터가 없습니다. 처음부터 시작해주세요.");
-      window.location.href = "index.html";
-    } else {
-      renderResult(result);
-    }
-
-    function renderResult(r) {
-      const { meta } = r;
-      board    = r.board;
-      analysis = r.analysis;
-
-      // 메타 정보
-      document.getElementById("jeolgiName").textContent  = meta.jeolgiName;
-      document.getElementById("dunType").textContent     = meta.type;
-      document.getElementById("baseGuksu").textContent   = meta.baseGuksu;
-      document.getElementById("jibansu").textContent     = analysis.jibanHong;
-      document.getElementById("cheonbansu").textContent  = analysis.cheonbanHong;
-      // 경고 표시
-      if (meta.warning) {
-        const wb = document.getElementById("warnBox");
-        wb.textContent = "⚠️ " + meta.warning;
-        wb.style.display = "block";
-      }
-
-      document.getElementById("segungLabel").textContent =
-        `${analysis.segungIndex}번 ${analysis.segungName}` +
-        (analysis.dayGanOhaeng ? ` (일간 ${analysis.dayGanOhaeng})` : "");
-
-      // ── 세궁 해설 렌더링 ──────────────────────────
-      const segung = board[analysis.segungIndex];
-      if (segung) {
-        const sg = segung.gungInfo;
-        const sr = segung.relation;
-
-        document.getElementById("ssNum").textContent      = analysis.segungIndex;
-        document.getElementById("ssGungName").textContent = sg.name;
-        document.getElementById("ssMeta").textContent     =
-          `${sg.direction} · ${sg.ohaeng} · ${sg.desc}`;
-
-        // 세궁 도출 근거 설명
-        const ganDesc = analysis.dayGanOhaeng
-          ? `일간 오행(${analysis.dayGanOhaeng})을 기준으로 ` : "";
-        document.getElementById("ssDesc").textContent =
-          `${ganDesc}${meta.baseGuksu}국 ${meta.type} 포국에서 세궁은 ` +
-          `${sg.name}(${sg.direction})입니다. ` +
-          `이 방이 현재 나의 중심 자리로, 지반수 ${segung.jibansu}에 ` +
-          `천반수 ${segung.cheonbansu}이 올라앉은 구조입니다. ` +
-          `${sg.desc}의 기운이 주도하는 시기로 ${sr.summary}.`;
-
-        // 관계 요약
-        document.getElementById("ssRelation").innerHTML =
-          `<strong>${sr.label}</strong> · ${sr.score}점 &nbsp;—&nbsp; ${sr.desc}` +
-          (sr.detail ? `<br><span style="opacity:.8">${sr.detail}</span>` : "");
-      }
-
-      // 팔문 배속
-      palmunBoard = (typeof buildPalmunBoard === "function")
-        ? buildPalmunBoard(analysis.segungIndex)
-        : {};
-
-      // ── 동처(動處) 분석 ──────────────────────────
-      // 각 궁의 활성도 점수 계산
-      function calcDongcheoScore(g) {
-        let score = 0;
-        // 천극지 — 에너지 충돌 최강
-        if (g.relation.label.includes("천극지")) score += 40;
-        else if (g.relation.label.includes("지극천")) score += 25;
-        else if (g.relation.label.includes("천생지")) score += 20;
-        else if (g.relation.label.includes("지생천")) score += 15;
-        // 팔문 극단값
-        const pmScore = g.palmun?.score ?? 50;
-        if (pmScore <= 5)  score += 35;  // 절명
-        else if (pmScore <= 15) score += 28; // 절체
-        else if (pmScore >= 95) score += 25; // 생기
-        // 신살 발동
-        score += (g.sinsal || []).length * 20;
-        // 세궁 제외
-        if (g.isSegung) score = 0;
-        return score;
-      }
-
-      const dongcheoScores = Object.values(board)
-        .map(g => ({ g, score: calcDongcheoScore(g) }))
-        .filter(d => d.score > 0)
-        .sort((a, b) => b.score - a.score);
-
-      const topDongcheo = dongcheoScores.slice(0, 2); // 상위 2개
-      dongcheoNums = new Set(topDongcheo.map(d => d.g.gungNum));
-
-      // 동처 요약 카드 렌더링
-      if (topDongcheo.length > 0) {
-        document.getElementById("dongcheoSummary").style.display = "block";
-        document.getElementById("dongcheoText").innerHTML = topDongcheo.map(({ g, score }) => {
-          const reasons = [];
-          if (g.relation.label.includes("극")) reasons.push(`${g.relation.label} 충돌`);
-          if (g.palmun?.score <= 15) reasons.push(`${g.palmun.label} 발동`);
-          if (g.palmun?.score >= 95) reasons.push(`${g.palmun.label} 발동`);
-          if (g.sinsal?.length) reasons.push(g.sinsal.map(s => s.label).join("·"));
-          return `<strong style="color:#ddb840">${g.gungInfo.name}(${g.gungInfo.direction})</strong> — ${reasons.join(", ")}`;
-        }).join("<br>");
-      }
-
-      // 구궁도 그리드 렌더링
-      function renderGrid() {
-        const gridOrder = currentMapMode === 'traditional' ? GRID_TRADITIONAL : GRID_MODERN;
-        const grid = document.getElementById("gugungGrid");
-        grid.innerHTML = "";
-
-        // 방위 나침반 라벨 업데이트
-        document.getElementById('compassTop').textContent    = currentMapMode === 'traditional' ? '南 ↑' : '北 ↑';
-        document.getElementById('compassBottom').textContent = currentMapMode === 'traditional' ? '↓ 北' : '↓ 南';
-      gridOrder.forEach(gungNum => {
-        const g = board[gungNum];
-        if (!g) return;
-
-        const rel = g.relation;
-        const isSegung   = g.isSegung || gungNum === analysis.segungIndex;
-        const isDongcheo = dongcheoNums.has(gungNum);
-        const scoreClass =
-          rel.score >= 80 ? "high" :
-          rel.score >= 40 ? "mid" : "low";
-
-        const cell = document.createElement("div");
-        cell.className = "gung-cell"
-          + (isSegung   ? " is-segung"   : "")
-          + (isDongcheo ? " is-dongcheo" : "");
-        cell.dataset.gungNum = gungNum;
-
-        const pmKey  = palmunBoard[gungNum] || "";
-        const pmInfo = pmKey ? (PALMUN[pmKey] || { label: pmKey, score: 50 }) : null;
-        const pmClass = pmInfo
-          ? (pmInfo.score >= 80 ? "palmun-gil" : pmInfo.score >= 50 ? "palmun-mid" : "palmun-흉")
-          : "";
-
-        cell.innerHTML = `
-          <span class="score-badge badge-${rel.badge}">${rel.badge}</span>
-          <span class="gung-hanja">${g.gungInfo.hanja}</span>
-          <span class="gung-name">${g.gungInfo.direction}</span>
-          <span class="gung-num">${g.jibansu}</span>
-          <span class="gung-cheonban">天 ${g.cheonbansu}</span>
-          <span class="gung-keyword">${g.gungInfo.desc}</span>
-          ${pmInfo ? `<span class="palmun-badge ${pmClass}">${pmInfo.label.replace(/\(.*\)/,"")}</span>` : ""}
-          ${(g.sinsal && g.sinsal.length > 0)
-            ? `<div class="sinsal-list">${g.sinsal.map(s => `<span class="sinsal-badge">${s.symbol || "⚡"}${s.label.replace(/\(.*\)/,"")}</span>`).join("")}</div>`
-            : ""}
-          ${isDongcheo ? `<span class="dongcheo-badge">⚡동처</span>` : ""}
-          <div class="score-bar-wrap" style="width:100%; margin-top:4px;">
-            <div class="score-bar ${scoreClass}" style="width:${rel.score}%"></div>
+      <!-- 헤더 -->
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;">
+        ${Harakisu.renderYao(guaLines, t.yaoPos, 'sm')}
+        <div style="flex:1;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-weight:800;font-size:1rem;">${t.startAge}~${t.endAge}세</span>
+            <span style="font-size:.72rem;color:var(--text-muted);">(${t.startYear}~${t.endYear}년)</span>
+            ${isCur ? '<span style="font-size:.7rem;background:var(--accent);color:#fff;padding:1px 8px;border-radius:20px;">▶ 현재</span>' : ''}
+            ${t.isHc ? '<span style="font-size:.7rem;color:var(--gold);border:1px solid var(--gold);padding:1px 7px;border-radius:20px;">후천</span>' : ''}
           </div>
-        `;
+          <div style="font-size:.78rem;color:var(--text-muted);">${lifeStage(t.startAge)} · ${t.yang?'양효 9년':'음효 6년'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:1rem;font-weight:800;color:${isCur?'var(--accent-light)':'var(--text)'};">${guaInfo.name||t.gua+'번괘'}</div>
+          <div style="font-size:.7rem;color:var(--text-muted);">${t.gua}번괘 ${t.yaoPos}효</div>
+        </div>
+      </div>
 
-        cell.addEventListener("click", () => showDetail(g, isSegung));
-        grid.appendChild(cell);
-      });
-      } // end renderGrid
+      <!-- 이 시기의 에너지 -->
+      <div style="font-size:.8rem;color:${t.yang?'#818cf8':'#f472b6'};margin-bottom:10px;padding:6px 10px;background:${t.yang?'rgba(129,140,248,.08)':'rgba(244,114,182,.08)'};border-radius:6px;">
+        ${yaoEnergy(t.yang)}
+      </div>
 
-      renderGrid(); // 초기 렌더링
+      <!-- 괘 해석 -->
+      ${guaInfo.practical ? `
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;">
+        <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:4px;">이 시기의 핵심 기운 (${guaInfo.name})</p>
+        <p style="font-size:.85rem;line-height:1.75;">${guaInfo.practical}</p>
+      </div>` : ''}
 
-      // 길흉 요약 — 결합 점수(생극 45% + 팔문 45% + 신살 10%) 기준 정렬
-      const giljung = r.giljung || deriveGiljung(board, analysis.segungIndex);
-      combinedMap = {};
-      [...giljung.gilbang, ...giljung.hyungbang, giljung.segung]
-        .filter(Boolean)
-        .forEach(item => { combinedMap[item.gungNum] = item.combined; });
+      <!-- 효사 -->
+      ${yaoInfo.text_ko ? `
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;">
+        <p style="font-size:.68rem;color:var(--gold);margin-bottom:4px;">${t.yaoPos}효 메시지</p>
+        <p style="font-size:.85rem;font-weight:600;margin-bottom:4px;">${yaoInfo.text_ko}</p>
+        ${yaoInfo.comment_ko ? `<p style="font-size:.82rem;color:var(--text-muted);line-height:1.7;">${yaoInfo.comment_ko}</p>` : ''}
+      </div>` : ''}
 
-      // combinedMap에 없는 궁(세궁 제외 외 나머지)도 보완 계산
-      Object.values(board).forEach(g => {
-        if (combinedMap[g.gungNum] === undefined) {
-          const relationScore = g.relation.score;
-          const palmunScore   = g.palmun?.score ?? 55;
-          const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
-          combinedMap[g.gungNum] = Math.max(0, Math.round(relationScore * 0.45 + palmunScore * 0.45 + sinsalPenalty * 0.1));
-        }
-      });
+      <!-- 주의사항 -->
+      ${guaInfo.caution ? `
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;">
+        <p style="font-size:.68rem;color:#f87171;margin-bottom:4px;">⚠ 이 시기 주의사항</p>
+        <p style="font-size:.82rem;color:var(--text-muted);line-height:1.7;">${guaInfo.caution}</p>
+      </div>` : ''}
 
-      // 점수 → 배지 (대흉 추가)
-      function combinedBadge(score) {
-        if (score >= 80) return "대길";
-        if (score >= 60) return "길";
-        if (score >= 40) return "중";
-        if (score >= 25) return "보통";
-        if (score >= 10) return "흉";
-        return "대흉";
-      }
+    </div>`;
+  }).join('');
+}
 
-      // 점수 구간별 종합 해석 멘트
-      function combinedComment(score, gungName) {
-        if (score >= 80) return `${gungName}은 현재 매우 강한 길기가 작용합니다. 이 방위를 적극 활용하세요.`;
-        if (score >= 60) return `${gungName}은 길한 기운이 흐릅니다. 중요한 일을 이 방향에서 진행하면 유리합니다.`;
-        if (score >= 40) return `${gungName}은 길흉이 혼재합니다. 신중하게 판단하고 움직이세요.`;
-        if (score >= 25) return `${gungName}은 다소 불안정한 흐름입니다. 큰 결정은 보류하는 것이 좋습니다.`;
-        if (score >= 10) return `${gungName}은 흉한 기운이 작용합니다. 이 방위의 이동·계약은 주의가 필요합니다.`;
-        return `${gungName}은 매우 강한 흉기가 집중되어 있습니다. 이동·계약·투자를 피하고 현상 유지에 집중하세요.`;
-      }
+function promptBox(result) {
+  return `
+  <div class="card" style="margin-top:24px;">
+    <h3 style="font-weight:700;margin-bottom:6px;">🤖 Claude 심층 상담 프롬프트</h3>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:14px;">
+      아래 프롬프트를 복사해 <strong>claude.ai</strong> 대화창에 붙여넣으세요.<br>
+      추가 질문을 입력하면 맞춤 프롬프트가 생성됩니다.
+    </p>
+    <textarea id="prompt-question" rows="2" placeholder="추가 질문 (예: 이직해도 될까요? / 올해 사업 시작해도 될까요?)"
+      style="margin-bottom:10px;resize:vertical;"></textarea>
+    <div style="display:flex;gap:10px;">
+      <button onclick="copyPrompt()" id="copy-btn"
+        style="flex:1;padding:12px 0;border-radius:10px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:.95rem;font-family:inherit;transition:background .3s;">
+        📋 프롬프트 복사
+      </button>
+      <a href="https://claude.ai" target="_blank"
+        style="padding:12px 18px;border-radius:10px;border:1px solid var(--border);color:var(--text-muted);text-decoration:none;font-size:.9rem;display:flex;align-items:center;">
+        Claude 열기 ↗
+      </a>
+    </div>
+    <details style="margin-top:14px;">
+      <summary style="font-size:.8rem;color:var(--text-muted);cursor:pointer;">프롬프트 미리보기</summary>
+      <pre id="prompt-preview" style="margin-top:10px;padding:12px;background:var(--surface2);border-radius:8px;font-size:.72rem;color:var(--text-muted);white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:280px;overflow-y:auto;"></pre>
+    </details>
+  </div>`;
+}
 
-      const sorted = Object.values(board)
-        .map(g => ({ g, combined: combinedMap[g.gungNum] }))
-        .sort((a, b) => b.combined - a.combined);
+// ── 메인 ──────────────────────────────────────────────────────
+let RESULT = null;
 
-      const list = document.getElementById("summaryList");
-      list.innerHTML = "";
-      sorted.forEach(({ g, combined }, i) => {
-        const badge   = combinedBadge(combined);
-        const comment = combinedComment(combined, g.gungInfo.name);
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <span class="summary-rank">${i + 1}</span>
-          <div class="summary-item-body">
-            <div class="summary-item-header">
-              <span class="summary-item-name">${g.gungInfo.name}</span>
-              <span class="summary-item-dir">${g.gungInfo.direction}</span>
-              <span class="score-badge badge-${badge}" style="position:static;">${badge} ${combined}점</span>
-              ${g.palmun ? `<span class="palmun-badge" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(180,140,80,0.1); color:var(--gold); border:1px solid var(--border);">${g.palmun.label}</span>` : ""}
+async function main() {
+  const p = new URLSearchParams(location.search);
+  const year   = Number(p.get('year'));
+  const month  = Number(p.get('month'));
+  const day    = Number(p.get('day'));
+  const hour   = Number(p.get('hour') ?? 12);
+  const gender = p.get('gender') || 'male';
+
+  if (!year) { location.href = 'input.html'; return; }
+
+  try {
+    RESULT = await Harakisu.calcHarakisu({ year, month, day, hour, gender });
+  } catch(e) {
+    document.getElementById('loading-screen').innerHTML =
+      `<p style="color:#f87171;">계산 오류: ${e.message}</p><a href="input.html" style="color:var(--accent-light);">← 다시 입력</a>`;
+    return;
+  }
+
+  const { ganji8, suri, sc, hc, wondang, wondangYao, yy, timeline, birthYear, currentYear } = RESULT;
+  const korAge = currentYear - birthYear + 1;
+  const cur    = timeline.find(t => korAge >= t.startAge && korAge <= t.endAge);
+
+  // 사주 배너
+  document.getElementById('saju-banner').innerHTML = `
+    <div>
+      <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">사주팔자</p>
+      <div style="display:flex;gap:12px;">
+        ${['연주','월주','일주','시주'].map((label,i) => `
+          <div style="text-align:center;">
+            <div style="font-size:.58rem;color:var(--text-muted);margin-bottom:2px;">${label}</div>
+            <div style="font-size:1.1rem;font-weight:700;line-height:1.3;color:${i===2?'var(--gold)':'var(--text)'};">
+              ${ganji8[i*2]}<br>${ganji8[i*2+1]}
             </div>
-            <div class="summary-item-desc">${comment}</div>
-            ${g.palmun ? `<div class="summary-item-desc" style="color:var(--text-muted); font-size:12px; margin-top:2px;">📌 ${g.palmun.desc}</div>` : ""}
-            <div class="summary-item-desc" style="color:var(--text-dim); font-size:12px; margin-top:2px;">${g.relation.desc}</div>
-            ${g.relation.detail ? `
-            <div class="summary-item-detail">
-              <span>${g.relation.detail}</span>
-            </div>` : ""}
-            ${(g.sinsal && g.sinsal.length > 0) ? `
-            <div class="summary-item-detail" style="border-left-color: rgba(200,60,40,0.4); background: rgba(180,50,30,0.06);">
-              <span class="summary-item-detail-arrow" style="color:#e07060;">⚡</span>
-              <span style="color:#c87060;">${g.sinsal.map(s => s.label).join(", ")} 발동 — ${g.sinsal.map(s => s.desc).join(" ")}</span>
-            </div>` : ""}
-          </div>
-        `;
-        list.appendChild(li);
+          </div>`).join('')}
+      </div>
+    </div>
+    <div style="height:36px;width:1px;background:var(--border);"></div>
+    <div>
+      <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">수리</p>
+      <p style="font-weight:700;">천수 <span style="color:var(--accent-light);">${suri.cheonsu}</span> · 지수 <span style="color:#f472b6;">${suri.jisu}</span></p>
+    </div>
+    <div style="height:36px;width:1px;background:var(--border);"></div>
+    <div>
+      <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">${gender==='male'?'남성':'여성'} · ${birthYear}년생 · ${korAge}세</p>
+      <p style="font-weight:700;">일간 <span style="color:var(--gold);">${ganji8[4]}</span></p>
+    </div>`;
+
+  sc._label = '선천괘 · 인생 전반';
+  hc._label = '후천괘 · 인생 후반';
+  yy._label = `올해 ${currentYear}년 유년괘`;
+
+  // ── 개요 탭
+  document.getElementById('tab-overview').innerHTML =
+    infoBox(`하락이수(河洛理數)는 사주의 천간·지지를 숫자로 변환해 주역 64괘로 인생을 읽는 운명학입니다.<br>
+<strong style="color:var(--text);">선천괘</strong>는 타고난 기질과 인생 전반, <strong style="color:var(--text);">후천괘</strong>는 경험으로 만들어지는 인생 후반을 나타냅니다.
+각 탭에서 더 자세한 설명과 해석을 확인하세요. 심층 풀이가 필요하면 아래 <strong style="color:var(--text);">Claude 프롬프트</strong>를 복사해 claude.ai에 붙여넣으세요.`) +
+    `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+      ${guaCard(sc, sc.lines, wondang, `원당효 ${wondang}효`)}
+      ${guaCard(hc, hc.lines, null, '')}
+    </div>
+    <div class="card" style="margin-bottom:20px;border-color:var(--gold);">
+      <p style="font-size:.72rem;color:var(--gold);margin-bottom:10px;">올해 ${currentYear}년 유년괘</p>
+      <div style="display:flex;gap:18px;align-items:center;">
+        ${Harakisu.renderYao(sc.lines, yy.yaoPos, 'sm')}
+        <div>
+          <div style="font-size:1.25rem;font-weight:800;">${yy.name||'—'} ${yy.yaoPos}효</div>
+          <p style="color:var(--text-muted);font-size:.85rem;margin-top:6px;">${yy.yaoData?.text_ko||yy.dansa||''}</p>
+          ${yy.yaoData?.comment_ko ? `<p style="color:var(--accent-light);font-size:.82rem;margin-top:6px;">💡 ${yy.yaoData.comment_ko}</p>` : ''}
+        </div>
+      </div>
+    </div>
+    ${promptBox(RESULT)}`;
+
+  // ── 선천괘 탭
+  const scBaseHtml =
+    infoBox(`<strong style="color:var(--text);">선천괘(先天卦)란?</strong><br>
+태어날 때부터 타고난 기질·재능·인생 전반(약 40세 이전)의 큰 흐름을 나타냅니다. 바꿀 수 없는 본래의 성품과 이 생에서 주어진 과제가 담겨 있습니다.<br><br>
+<strong style="color:var(--text);">원당효(元堂爻)란?</strong><br>
+선천괘의 6개 효(爻) 중 나의 핵심 에너지가 집중된 자리입니다. 가장 중요한 효로, 인생의 주된 기질과 강점을 읽는 핵심 지점입니다.`) +
+    detailCard(sc, sc.lines, wondang, wondangYao, `원당효(元堂爻) · ${wondang}효`);
+
+  const scLoadingCard = `<div class="card" id="sc-temperament-card" style="margin-top:14px;">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:12px;">🔍 기질·에너지 분석</p>
+    <div style="display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:.85rem;">
+      <div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></div>
+      AI가 이 괘의 기질과 에너지 구조를 분석하고 있습니다...
+    </div>
+  </div>`;
+
+  document.getElementById('tab-seoncheon').innerHTML = scBaseHtml + scLoadingCard;
+
+  (async () => {
+    const wYaoText = wondangYao?.text_ko || '';
+    const wYayCom  = wondangYao?.comment_ko || '';
+    const prompt = `다음은 하락이수에서 도출된 선천괘(타고난 기질·인생 전반)와 원당효(핵심 에너지 자리)입니다.
+
+선천괘: ${sc.name}(${sc.guaNo}번괘)
+괘사: ${sc.dansa || ''}
+실용 해석: ${sc.practical || ''}
+원당효: ${wondang}효
+원당효 효사: ${wYaoText}
+원당효 해설: ${wYayCom}
+성별: ${gender === 'male' ? '남성' : '여성'} / 출생연도: ${birthYear}년
+
+위 정보를 바탕으로 이 사람의 에너지 구조를 아래 형식의 JSON으로만 출력하세요. 다른 텍스트 없이 JSON만 출력합니다:
+{
+  "core": "핵심 기질 한 줄 (20자 내외)",
+  "strengths": ["강점1", "강점2", "강점3"],
+  "weaknesses": ["주의할 점1", "주의할 점2"],
+  "lifetheme": "이 사람의 인생 과제 또는 방향성 (2~3문장)",
+  "energy": "원당효가 보여주는 핵심 에너지 (2~3문장)",
+  "advice": "이 에너지를 잘 쓰기 위한 조언 (1~2문장)"
+}`;
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }] }),
       });
+      const data = await resp.json();
+      const raw  = data.content?.map(c => c.text || '').join('').trim();
+      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      const card = document.getElementById('sc-temperament-card');
+      if (!card) return;
+      card.innerHTML = `
+        <p style="font-size:.72rem;color:var(--accent-light);margin-bottom:16px;letter-spacing:.05em;">✦ 기질·에너지 분석</p>
+        <p style="font-size:1.15rem;font-weight:800;margin-bottom:20px;line-height:1.4;">"${parsed.core}"</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+          <div style="padding:12px;background:var(--surface2);border-radius:8px;">
+            <p style="font-size:.68rem;color:var(--accent-light);margin-bottom:8px;">강점</p>
+            ${parsed.strengths.map(s => `<p style="font-size:.85rem;margin-bottom:4px;">· ${s}</p>`).join('')}
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:8px;">
+            <p style="font-size:.68rem;color:#f472b6;margin-bottom:8px;">주의할 점</p>
+            ${parsed.weaknesses.map(w => `<p style="font-size:.85rem;margin-bottom:4px;">· ${w}</p>`).join('')}
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+          <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:6px;">인생 과제 · 방향성</p>
+          <p style="line-height:1.85;font-size:.9rem;">${parsed.lifetheme}</p>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+          <p style="font-size:.68rem;color:var(--gold);margin-bottom:6px;">원당효 핵심 에너지</p>
+          <p style="line-height:1.85;font-size:.9rem;">${parsed.energy}</p>
+        </div>
+        <div style="padding:12px 14px;background:rgba(124,58,237,.08);border-radius:8px;border-left:3px solid var(--accent);">
+          <p style="font-size:.68rem;color:var(--accent-light);margin-bottom:4px;">이 에너지를 잘 쓰려면</p>
+          <p style="font-size:.88rem;line-height:1.7;">${parsed.advice}</p>
+        </div>`;
+    } catch(e) {
+      const card = document.getElementById('sc-temperament-card');
+      if (card) card.style.display = 'none';
     }
+  })();
 
-    // ── 궁별 고유 해설 ─────────────────────────────────────────
-    const GUNG_MEANING = {
-      1: { keyword:"지혜 / 내면 / 인내 / 흐름",   life:"수(水)의 기운으로 깊이 스며들 듯 상황을 파악하고 때를 기다리는 전략이 유효한 자리입니다. 내면의 성찰과 은밀한 움직임이 빛을 발합니다." },
-      2: { keyword:"결실 / 협력 / 헌신 / 수용",   life:"땅의 어머니 기운으로 성실히 가꾼 것이 결실을 맺는 자리입니다. 독단보다 함께 가는 방식이 더 큰 성과를 냅니다." },
-      3: { keyword:"도전 / 시작 / 추진력 / 성장", life:"봄의 우레 같은 약동하는 기운으로 새 일을 시작하고 앞으로 나아가는 자리입니다. 추진력이 강하지만 충동적 결정을 경계해야 합니다." },
-      4: { keyword:"유연 / 소통 / 침투 / 계약",   life:"바람처럼 스며드는 유연한 기운의 자리입니다. 강압보다 설득, 고집보다 적응이 성과를 만들며 문서·계약·소통과 인연이 깊습니다." },
-      5: { keyword:"변화 / 중심 / 주도 / 전환점", life:"모든 기운이 모이는 중앙의 자리로 변화와 주도권이 동시에 작용합니다. 안정과 혼란이 공존하며 중심을 잡는 자가 판을 주도합니다." },
-      6: { keyword:"권위 / 리더십 / 결단 / 하늘", life:"하늘의 아버지 기운으로 리더십과 권위가 드러나는 자리입니다. 결단력이 강점이지만 유연성을 잃으면 고집이 되니 균형이 필요합니다." },
-      7: { keyword:"기쁨 / 표현 / 교류 / 설득",   life:"기쁨과 열린 소통의 기운이 가득한 자리입니다. 말과 표현이 힘이 되며 인간관계와 교류에서 운이 열립니다. 가볍고 방만해지지 않도록 주의합니다." },
-      8: { keyword:"정지 / 내실 / 마무리 / 축적", life:"산처럼 멈추고 지키는 기운의 자리입니다. 무리한 확장보다 기반을 단단히 다지고 과거를 마무리하는 것이 이롭습니다." },
-      9: { keyword:"명예 / 빛 / 문서 / 인정",     life:"밝은 빛과 명예의 기운으로 드러남과 인정이 따르는 자리입니다. 학문·문서·명성과 연결되며 감정 기복을 다스리면 빛이 더욱 강해집니다." },
-    };
+  // ── 후천괘 탭
+  document.getElementById('tab-hucheon').innerHTML =
+    infoBox(`<strong style="color:var(--text);">후천괘(後天卦)란?</strong><br>
+살면서 경험과 노력으로 만들어지는 인생 후반(약 40세 이후)의 흐름입니다. 선천괘가 타고난 씨앗이라면, 후천괘는 그 씨앗이 자라 맺은 열매의 모습입니다.<br><br>
+선천괘와 같은 괘가 나오면 전·후반이 일관된 인생이고, 다른 괘가 나오면 인생 후반에 새로운 전환이 찾아옴을 뜻합니다.`) +
+    detailCard(hc, hc.lines, null, null, '');
 
-    function showDetail(g, isSegung) {
-      const detail = document.getElementById("gungDetail");
-      detail.classList.add("active");
+  // ── 유년괘 탭
+  document.getElementById('tab-yunnyeon').innerHTML =
+    infoBox(`<strong style="color:var(--text);">올해 운(流年卦)이란?</strong><br>
+선천괘의 효를 나이에 따라 한 칸씩 올라가며 읽는 방식입니다. 양효(—)는 9년, 음효(--)는 6년을 지배하며, 올해 내 나이가 속한 효가 바로 지금의 운입니다.<br><br>
+괘사는 괘 전체의 분위기를, 효사(爻辭)는 지금 이 시점 나에게 해당하는 구체적인 메시지를 담고 있습니다.`) +
+    `<div class="card" style="border-color:var(--gold);margin-bottom:16px;">
+      <p style="font-size:.72rem;color:var(--gold);margin-bottom:12px;">${currentYear}년 유년괘</p>
+      <div style="display:flex;gap:24px;align-items:center;margin-bottom:18px;">
+        ${Harakisu.renderYao(sc.lines, yy.yaoPos, 'lg')}
+        <div>
+          <h2 style="font-size:1.7rem;font-weight:800;">${yy.name||'—'} ${yy.yaoPos}효</h2>
+          <p style="color:var(--text-muted);font-size:.85rem;">${yy.gua}번괘 · 현재 ${korAge}세</p>
+        </div>
+      </div>
+      ${yy.dansa ? `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;"><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">괘사</p><p style="line-height:1.85;">${yy.dansa}</p></div>` : ''}
+      ${yy.yaoData?.text_ko ? `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;"><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">효사</p><p style="font-weight:600;margin-bottom:6px;">${yy.yaoData.text_ko}</p><p style="color:var(--accent-light);line-height:1.7;">${yy.yaoData.comment_ko||''}</p></div>` : ''}
+      ${cur ? `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;"><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:6px;">현재 대운 구간</p><p>${cur.startAge}세~${cur.endAge}세 (${cur.yang?'양효 9년':'음효 6년'} 지배)</p></div>` : ''}
+    </div>
+    ${promptBox(RESULT)}`;
 
-      const gm = GUNG_MEANING[g.gungNum] || {};
+  // ── 타임라인 탭
+  document.getElementById('tab-timeline').innerHTML =
+    infoBox(`<strong style="color:var(--text);">대운 흐름이란?</strong><br>
+선천괘의 6효를 1효부터 차례로 올라가며 평생의 운 흐름을 나눈 것입니다. 양효(━)가 나오는 구간은 <strong style="color:#818cf8;">9년</strong>이 지배하고, 음효(- -)가 나오는 구간은 <strong style="color:#f472b6;">6년</strong>이 지배합니다.<br><br>
+각 구간의 <strong style="color:var(--text);">괘 번호 + 효 위치</strong>가 그 기간의 핵심 에너지입니다. 64괘 사전에서 해당 괘를 찾아 그 효사(爻辭)를 읽으면 구체적인 의미를 확인할 수 있습니다.<br>
+선천괘의 효를 다 올라가면 후천괘로 넘어가 같은 방식으로 계속됩니다.`) +
+    `<div class="card" style="margin-bottom:16px;">
+      <h3 style="font-weight:700;margin-bottom:6px;">평생 대운 타임라인</h3>
+      <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:18px;">양효(—)는 9년, 음효(--)는 6년 지배. 보라색 테두리가 현재 구간입니다.</p>
+      ${timelineHtml(timeline, birthYear)}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${timelineListHtml(timeline, birthYear)}
+    </div>`;
 
-      // 제목 (세궁·동처 표시)
-      const isDc = dongcheoNums.has(g.gungNum);
-      document.getElementById("detailTitle").textContent =
-        g.gungInfo.name
-        + (isSegung ? " ★ 세궁(나의 방)" : "")
-        + (isDc     ? " ⚡ 동처(활성)" : "");
 
-      // 메타 행
-      document.getElementById("detailDir").textContent      = g.gungInfo.direction;
-      document.getElementById("detailOhaeng").textContent   = g.gungInfo.ohaeng + "  ·  " + (gm.keyword || g.gungInfo.desc);
-      document.getElementById("detailJiban").textContent    = g.jibansu;
-      document.getElementById("detailCheon").textContent    = g.cheonbansu;
-      document.getElementById("detailRelation").textContent = g.relation.label;
+  // ── 인생 사건 탭 ──────────────────────────────────────────────────────────
 
-      // combined 점수 기반 배지·멘트 표시
-      const detailCombined = combinedMap[g.gungNum] ?? g.relation.score;
-      const detailBadge    = combinedBadge(detailCombined);
-      const detailComment  = combinedComment(detailCombined, g.gungInfo.name);
-      document.getElementById("detailScore").textContent =
-        detailBadge + " " + detailCombined + "점";
+  const GUA_EVENT_MAP = {
+    31: { events:['결혼·혼인 가능성'], icon:'💍',
+          basis:'택산함(澤山咸) — 함(咸)은 "느낌·교감". 남녀가 서로 감응하여 맺어지는 것을 으뜸 상징으로 삼는다.' },
+    53: { events:['결혼·혼인 가능성','점진적 진행'], icon:'💍',
+          basis:'풍산점(風山漸) — 단사에 "女歸吉(여자가 시집가면 길하다)"이 명시됨.' },
+    54: { events:['결혼·혼인 가능성'], icon:'💍',
+          basis:'뇌택귀매(雷澤歸妹) — 귀매(歸妹)는 글자 그대로 "시집감". 혼인을 괘 이름에 직접 담은 괘.' },
+    11: { events:['동거·결합','새 출발'], icon:'🏠',
+          basis:'지천태(地天泰) — 천지가 교감하여 음양이 조화롭게 합쳐지는 상. 결합과 번영을 상징.' },
+    32: { events:['장기 동반자 관계'], icon:'🏠',
+          basis:'뇌풍항(雷風恒) — 단사에 "夫婦之道也(부부의 도리)"가 명시됨. 오래 함께하는 관계.' },
+    38: { events:['이혼·이별·불화 가능성'], icon:'💔',
+          basis:'화택규(火澤睽) — 규(睽)는 "등짐·어긋남". 두 사람이 반대 방향으로 가는 이별·불화의 상.' },
+    12: { events:['이별·단절·별거 가능성'], icon:'💔',
+          basis:'천지비(天地否) — 비(否)는 "막힘". 천지가 교감하지 못해 관계가 단절되는 상.' },
+    47: { events:['별거·곤경'], icon:'💔',
+          basis:'택수곤(澤水困) — 곤(困)은 "곤궁·갇힘". 관계가 막히고 피폐해지는 시기.' },
+    23: { events:['큰 상실·폐업'], icon:'🕯️',
+          basis:'산지박(山地剝) — 박(剝)은 "벗겨짐·무너짐". 양기가 모두 소진되어 사라지는 상.' },
+    29: { events:['위기·건강 이상 주의'], icon:'🕯️',
+          basis:'중수감(重水坎) — 감(坎)은 "빠짐·함정". 연이은 위험에 빠지는 상.' },
+    1:  { events:['창업·독립·새 시작'], icon:'🚀',
+          basis:'중천건(重天乾) — 순수한 양의 기운. 새 일 시작·취직·도약을 상징.' },
+    3:  { events:['창업 초기의 어려움'], icon:'🚀',
+          basis:'수뢰둔(水雷屯) — 둔(屯)은 "초목이 땅을 뚫고 나옴". 창업 초기의 상.' },
+    14: { events:['취직·승진·재물 취득'], icon:'💼',
+          basis:'화천대유(火天大有) — 재물과 명예를 크게 얻는 상.' },
+    34: { events:['승진·도약'], icon:'💼',
+          basis:'뇌천대장(雷天大壯) — 강하게 뻗어나가는 상승·도약의 괘.' },
+    36: { events:['좌절·은퇴·역경'], icon:'📉',
+          basis:'지화명이(地火明夷) — 빛이 상함. 폐업·실직·후퇴의 시기.' },
+    6:  { events:['소송·분쟁'], icon:'⚖️',
+          basis:'천수송(天水訟) — 송(訟)은 "다툼·소송". 괘 이름에 직접 담음.' },
+    56: { events:['이사·이동·직장 변동'], icon:'🧳',
+          basis:'화산여(火山旅) — 여(旅)는 "나그네". 이사·출향의 가장 직접적인 괘.' },
+    42: { events:['투자·사업 확장·횡재'], icon:'💰',
+          basis:'풍뢰익(風雷益) — 재물과 이익이 늘어나는 괘.' },
+    41: { events:['손재수·지출 증가'], icon:'📉',
+          basis:'산택손(山澤損) — 재물이 빠져나가는 상.' },
+    24: { events:['새 시작·부활'], icon:'👶',
+          basis:'지뢰복(地雷復) — 양기가 새로 싹트는 상. 새 생명·임신의 기운.' },
+  };
 
-      // 팔문 행
-      const pmKey2   = palmunBoard[g.gungNum] || "";
-      const pmInfo2  = pmKey2 ? (PALMUN[pmKey2] || null) : null;
-      const pmRowEl  = document.getElementById("detailPalmunRow");
-      const pmValEl  = document.getElementById("detailPalmun");
-      if (pmInfo2) {
-        pmRowEl.style.display = "";
-        pmValEl.innerHTML =
-          `<strong style="color:var(--gold); font-weight:700;">${pmInfo2.label}</strong>` +
-          `<span style="color:var(--text-muted);"> — ${pmInfo2.desc}</span>`;
-      } else {
-        pmRowEl.style.display = "none";
+  const YAO_EVENT_DB = {
+    "3_2":  { event:"결혼·혼인", icon:"💍", basis:"효사: '혼인을 청하는 것이니… 10년 만에 혼인하게 된다'" },
+    "3_4":  { event:"결혼·혼인", icon:"💍", basis:"효사: '혼인을 구하면 가는 것이 길하다'" },
+    "4_2":  { event:"결혼·혼인", icon:"💍", basis:"효사: '아내를 맞아들이면 길하다. 자식이 집안을 이어간다'" },
+    "11_5": { event:"결혼·혼인", icon:"💍", basis:"효사: '제을이 딸을 시집보내니 복이 있고 크게 길하다'" },
+    "22_4": { event:"결혼·혼인", icon:"💍", basis:"효사: '도적이 아니니 혼인을 청한다'" },
+    "38_6": { event:"결혼·혼인", icon:"💍", basis:"효사: '도적이 아니라 혼인을 청하는 것이다'" },
+    "51_6": { event:"결혼·혼인", icon:"💍", basis:"효사: '혼인은 말이 있다'" },
+    "54_1": { event:"결혼·혼인", icon:"💍", basis:"효사: '귀매에 첩으로 시집가니 정벌하면 길하다'" },
+    "54_4": { event:"결혼·혼인", icon:"💍", basis:"효사: '귀매에 기한을 넘기니 늦게 시집감에 때가 있다'" },
+    "54_5": { event:"결혼·혼인", icon:"💍", basis:"효사: '제을이 누이를 시집보내니 달이 거의 찼으니 길하다'" },
+    "53_3": { event:"임신·출산", icon:"👶", basis:"효사: '아내가 임신해도 기르지 못한다'" },
+    "53_5": { event:"임신·출산", icon:"👶", basis:"효사: '아내가 3년이 되도록 임신하지 못한다. 마침내 길하다'" },
+    "6_1":  { event:"소송·분쟁", icon:"⚖️", basis:"효사: '약간의 말이 있어도 마침내 길하다'" },
+    "6_2":  { event:"소송·분쟁", icon:"⚖️", basis:"효사: '다툼을 이기지 못하고 돌아가 도망하니'" },
+    "6_3":  { event:"소송·분쟁", icon:"⚖️", basis:"송(訟)괘 — 소송·다툼의 괘, 3효 구간" },
+    "6_4":  { event:"소송·분쟁", icon:"⚖️", basis:"효사: '다툼을 이기지 못하고 돌아와 바름에 복종하면 길하다'" },
+    "6_5":  { event:"소송·분쟁", icon:"⚖️", basis:"효사: '다투니 크게 길하다'" },
+    "6_6":  { event:"소송·분쟁", icon:"⚖️", basis:"효사: '가죽 띠를 하사받아도 하루아침에 세 번 빼앗긴다'" },
+    "56_1": { event:"이사·이동", icon:"🧳", basis:"효사: '여행하며 사소한 일에 얽매이니 재앙을 취한다'" },
+    "56_2": { event:"이사·이동", icon:"🧳", basis:"효사: '여행하며 여관에 이르러 재물을 품는다'" },
+    "56_3": { event:"이사·이동", icon:"🧳", basis:"효사: '여행하며 여관을 불태우고 어린 하인을 잃는다'" },
+    "56_4": { event:"이사·이동", icon:"🧳", basis:"효사: '여행하며 처소를 얻고 재물과 도끼를 얻는다'" },
+    "56_5": { event:"이사·이동", icon:"🧳", basis:"효사: '꿩을 쏘아 한 발에 잡으니 명예와 명을 받는다'" },
+    "56_6": { event:"이사·이동", icon:"🧳", basis:"효사: '새가 둥지를 불태우니 여행자가 나중에 울부짖는다'" },
+    "16_5": { event:"건강·질병", icon:"🏥", basis:"효사: '바름을 지키면 병이 있어도 죽지 않는다'" },
+    "33_3": { event:"건강·질병", icon:"🏥", basis:"효사: '위태롭고 질병이 있다. 신하와 첩을 기르면 길하다'" },
+    "17_1": { event:"취직·임명", icon:"💼", basis:"효사: '벼슬이 바뀌었으니 바름을 지키면 길하다'" },
+  };
+
+  function findYaoEvents(tl) {
+    var events = [];
+    tl.forEach(function(t) {
+      var key = String(t.gua) + '_' + String(t.yaoPos);
+      var hit = YAO_EVENT_DB[key];
+      if (!hit) return;
+      var yaoInfo = (Harakisu.DB.yao?.[t.gua] || Harakisu.DB.yao?.[String(t.gua)])?.lines?.[t.yaoPos];
+      events.push({
+        age: t.startAge, ageEnd: t.endAge,
+        year: t.startYear, yearEnd: t.endYear,
+        gua: t.gua, yaoPos: t.yaoPos,
+        type: '효사 직접 근거 — ' + hit.event,
+        events: [hit.event], icon: hit.icon,
+        yaoText: yaoInfo?.text_ko || '',
+        desc: hit.basis,
+        basis: '실제 효사(text_ko)에 해당 사건 표현이 직접 포함됨',
+        tags: [hit.event], color: 'var(--accent-light)',
+      });
+    });
+    return events;
+  }
+
+  function findTransitionEvents(tl) {
+    var events = [];
+    for (var i = 1; i < tl.length; i++) {
+      var prev = tl[i-1], cur = tl[i];
+      if (prev.yang !== cur.yang) {
+        events.push({
+          age: cur.startAge, year: cur.startYear,
+          type: cur.yang ? '양효 전환 — 적극적 에너지로 전환' : '음효 전환 — 수용적 에너지로 전환',
+          desc: cur.yang
+            ? '음에서 양으로 에너지가 바뀌는 시점입니다. 정체되던 상황이 풀리며 새로운 일이 시작되거나 관계·직업에 변화가 생기기 쉽습니다.'
+            : '양에서 음으로 에너지가 바뀌는 시점입니다. 외향적 확장을 멈추고 내실을 다지는 쪽으로 방향이 전환됩니다. 마무리·정리·은퇴 등이 일어나기 쉽습니다.',
+          basis: '하락이수 원리: 양효(9년)와 음효(6년)의 전환점은 에너지 방향이 바뀌는 분기점으로, 사건이 집중되는 시기.',
+          tags: cur.yang ? ['변화','시작'] : ['마무리','전환'],
+          icon: cur.yang ? '🔄' : '🔄',
+          color: cur.yang ? '#818cf8' : '#f472b6',
+        });
       }
-
-      // ① 종합 멘트 (점수 구간 기반)
-      document.getElementById("detailDesc").textContent = detailComment;
-
-      // ② 궁 고유 해설
-      const lifeEl = document.getElementById("detailLife");
-      if (lifeEl) lifeEl.textContent = gm.life || g.gungInfo.desc;
-
-      // ② 천반·지반 관계 해설 — 팔문 설명 우선, 생극 설명 보조로 표시
-      const extraEl = document.getElementById("detailExtra");
-      const pmDescText = pmInfo2 ? pmInfo2.desc : "";
-      extraEl.textContent = pmDescText || g.relation.desc;
-
-      // ③ 부연설명 — 팔문 detail 우선, 없으면 생극 detail
-      const subEl = document.getElementById("detailSub");
-      const subText = g.relation.detail || "";
-      if (subText) {
-        subEl.style.display = "flex";
-        subEl.innerHTML = '<span>' + subText + '</span>';
-      } else {
-        subEl.style.display = "none";
-        subEl.innerHTML = "";
-      }
-
-      // ④ 신살
-      const sinsalWrap = document.getElementById("detailSinsalWrap");
-      const sinsalList = document.getElementById("detailSinsalList");
-      if (g.sinsal && g.sinsal.length > 0) {
-        sinsalWrap.style.display = "block";
-        sinsalList.innerHTML = g.sinsal.map(s => `
-          <div class="sinsal-detail-block">
-            <strong>${s.symbol || "⚡"} ${s.label} — ${s.severity}</strong>
-            ${s.desc}<br>
-            <span style="opacity:.8; font-size:11px;">${s.detail}</span>
-          </div>`).join("");
-      } else {
-        sinsalWrap.style.display = "none";
-        sinsalList.innerHTML = "";
-      }
-
-      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-  </script>
+    return events;
+  }
 
+  function findGuaEvents(tl) {
+    var events = [];
+    tl.forEach(function(t) {
+      var map = GUA_EVENT_MAP[t.gua] || GUA_EVENT_MAP[String(t.gua)];
+      if (!map) return;
+      var guaInfo = Harakisu.DB.dansa?.[t.gua] || Harakisu.DB.dansa?.[String(t.gua)] || {};
+      events.push({
+        age: t.startAge, ageEnd: t.endAge,
+        year: t.startYear, yearEnd: t.endYear,
+        gua: t.gua, yaoPos: t.yaoPos,
+        type: '괘 상징 — ' + map.events.join('·'),
+        events: map.events, icon: map.icon || '',
+        desc: map.basis,
+        basis: '괘의 핵심 상징에 해당 사건 유형이 포함됨',
+        tags: map.events, color: 'var(--gold)',
+      });
+    });
+    return events;
+  }
+
+  function eventsTabHtml(allEvents, korAge, birthYear) {
+    if (allEvents.length === 0) {
+      return `<div class="card" style="text-align:center;padding:48px 24px;color:var(--text-muted);">
+        <div style="font-size:2rem;margin-bottom:12px;">🔍</div>
+        <p style="margin-bottom:8px;">이 사주에서는 괘·효 원전에 특정 사건을 직접 가리키는 요소가 발견되지 않았습니다.</p>
+        <p style="font-size:.82rem;">"대운 흐름" 탭의 전반적인 흐름을 참고하세요.</p>
+      </div>`;
+    }
+    allEvents.sort(function(a, b) { return a.age - b.age; });
+    return allEvents.map(function(ev) {
+      var isCur = korAge >= ev.age && korAge <= (ev.ageEnd || ev.age + 15);
+      var guaInfo = ev.gua ? (Harakisu.DB.dansa?.[ev.gua] || Harakisu.DB.dansa?.[String(ev.gua)] || {}) : {};
+      return `<div class="card" style="border-color:${isCur ? 'var(--accent)' : 'var(--border)'};${isCur ? 'background:rgba(124,58,237,.06);' : ''}margin-bottom:12px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;">
+          <div style="flex-shrink:0;min-width:72px;text-align:center;padding:8px 10px;background:var(--surface2);border-radius:8px;">
+            <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:2px;">시기</div>
+            <div style="font-size:.95rem;font-weight:800;color:${ev.color};">${ev.age}${ev.ageEnd ? '~'+ev.ageEnd : ''}세</div>
+            <div style="font-size:.58rem;color:var(--text-muted);">${ev.year}${ev.yearEnd ? '~'+ev.yearEnd : ''}년</div>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+              ${ev.tags.map(function(t){return `<span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:rgba(124,58,237,.12);color:var(--accent-light);">${t}</span>`;}).join('')}
+              ${isCur ? '<span style="font-size:.7rem;background:var(--accent);color:#fff;padding:2px 8px;border-radius:20px;">▶ 현재 구간</span>' : ''}
+            </div>
+            <p style="font-size:.9rem;font-weight:700;margin-bottom:4px;">${ev.icon || ''} ${ev.type}</p>
+            ${ev.gua ? `<p style="font-size:.75rem;color:var(--text-muted);margin-bottom:6px;">${guaInfo.name || ev.gua+'번괘'} ${ev.yaoPos ? ev.yaoPos+'효' : ''}</p>` : ''}
+          </div>
+        </div>
+        ${ev.yaoText ? `<div style="padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:10px;font-size:.83rem;color:var(--text-muted);border-left:2px solid var(--gold);">"${ev.yaoText}"</div>` : ''}
+        <p style="font-size:.85rem;line-height:1.75;margin-bottom:8px;">${ev.desc}</p>
+        <p style="font-size:.72rem;color:var(--text-muted);padding:6px 10px;background:var(--surface2);border-radius:6px;">📖 근거: ${ev.basis}</p>
+      </div>`;
+    }).join('');
+  }
+
+  // ── 선후천 관계 분석 탭
+  const isSameGua = sc.guaNo === hc.guaNo;
+  const scYang = sc.lines ? sc.lines.filter(v => v===1).length : 0;
+  const hcYang = hc.lines ? hc.lines.filter(v => v===1).length : 0;
+  const yangDiff = hcYang - scYang;
+
+  // 선후천 관계 유형 판정
+  let relationLabel, relationDesc, relationColor;
+  if (isSameGua) {
+    relationLabel = '일관형 — 전후반이 같은 괘';
+    relationColor = 'var(--accent-light)';
+    relationDesc  = '선천괘와 후천괘가 동일합니다. 타고난 기질 그대로 인생 후반도 이어집니다. 중심이 흔들리지 않고 일관된 방향으로 나아가는 삶입니다. 자신의 본성을 깊이 파고들수록 후반이 풍요로워집니다.';
+  } else if (yangDiff > 1) {
+    relationLabel = '상승 전환형 — 후반이 더 양(陽)적';
+    relationColor = '#818cf8';
+    relationDesc  = '후천괘가 선천괘보다 양(陽)의 기운이 강합니다. 전반부는 다소 조용하거나 내면을 다지는 시기이지만, 40대 이후 에너지가 크게 발산되며 외향적·적극적으로 변화합니다. 늦게 피는 꽃의 유형입니다.';
+  } else if (yangDiff < -1) {
+    relationLabel = '수렴 전환형 — 후반이 더 음(陰)적';
+    relationColor = '#f472b6';
+    relationDesc  = '후천괘가 선천괘보다 음(陰)의 기운이 강합니다. 전반부는 활발하게 외부로 에너지를 쏟지만, 40대 이후 내면으로 깊어지고 관조적·수용적으로 변화합니다. 후반의 지혜와 깊이가 강점이 됩니다.';
+  } else {
+    relationLabel = '전환형 — 방향이 바뀌는 인생';
+    relationColor = 'var(--gold)';
+    relationDesc  = '선천괘와 후천괘가 다릅니다. 인생 전반과 후반에 뚜렷한 전환점이 찾아옵니다. 40대를 전후해 삶의 방향·가치관·환경 중 하나 이상이 크게 바뀌는 경험을 하게 됩니다. 이 전환을 받아들이는 태도가 후반 삶의 질을 결정합니다.';
+  }
+
+  // 선후천 교차 에너지 분석 로딩
+  const evLoadingHtml = `
+    <div class="card" id="sc-hc-ai-card" style="margin-top:14px;">
+      <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:12px;">🔍 선후천 교차 에너지 분석</p>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:.85rem;">
+        <div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></div>
+        AI가 선천·후천 교차 에너지 구조를 분석하고 있습니다...
+      </div>
+    </div>`;
+
+  document.getElementById('tab-events').innerHTML =
+    infoBox(`<strong style="color:var(--text);">선후천 관계 분석이란?</strong><br>
+선천괘(타고난 씨앗)와 후천괘(맺은 열매)의 관계를 읽으면 이 사람의 <strong>인생 에너지가 어떻게 흘러가는지</strong>가 보입니다.<br><br>
+두 괘가 <strong style="color:var(--accent-light);">같으면</strong> 일관된 삶, <strong style="color:#818cf8);">후천이 더 양(陽)이면</strong> 후반이 피어나는 삶, <strong style="color:#f472b6;">후천이 더 음(陰)이면</strong> 후반에 깊어지는 삶, <strong style="color:var(--gold);">괘가 다르면</strong> 전환점이 찾아오는 삶입니다.`) +
+
+    // 관계 유형 카드
+    `<div class="card" style="border-color:${relationColor};margin-bottom:14px;">
+      <p style="font-size:.68rem;color:${relationColor};margin-bottom:10px;letter-spacing:.05em;">인생 에너지 유형</p>
+      <p style="font-size:1.1rem;font-weight:800;margin-bottom:14px;">${relationLabel}</p>
+      <p style="line-height:1.85;font-size:.9rem;">${relationDesc}</p>
+    </div>` +
+
+    // 선천 vs 후천 나란히
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div class="card">
+        <p style="font-size:.65rem;color:var(--text-muted);margin-bottom:8px;">선천괘 · 인생 전반</p>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">
+          ${Harakisu.renderYao(sc.lines, wondang, 'sm')}
+          <div>
+            <p style="font-weight:800;font-size:1rem;">${sc.name}</p>
+            <p style="font-size:.72rem;color:var(--text-muted);">${sc.guaNo}번괘 · 원당 ${wondang}효</p>
+          </div>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);line-height:1.7;">${sc.practical || sc.dansa || ''}</p>
+      </div>
+      <div class="card">
+        <p style="font-size:.65rem;color:var(--text-muted);margin-bottom:8px;">후천괘 · 인생 후반</p>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">
+          ${Harakisu.renderYao(hc.lines, null, 'sm')}
+          <div>
+            <p style="font-weight:800;font-size:1rem;">${hc.name}</p>
+            <p style="font-size:.72rem;color:var(--text-muted);">${hc.guaNo}번괘</p>
+          </div>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);line-height:1.7;">${hc.practical || hc.dansa || ''}</p>
+      </div>
+    </div>` +
+
+    // 양효 구성 비교 바
+    `<div class="card" style="margin-bottom:14px;">
+      <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:12px;">양(陽)·음(陰) 구성 비교</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px;">
+            <span>선천괘 양효</span><span style="color:var(--accent-light);">${scYang}/6</span>
+          </div>
+          <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${(scYang/6*100).toFixed(0)}%;background:var(--accent);border-radius:4px;transition:width .6s;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px;">
+            <span>후천괘 양효</span><span style="color:#818cf8;">${hcYang}/6</span>
+          </div>
+          <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${(hcYang/6*100).toFixed(0)}%;background:#818cf8;border-radius:4px;transition:width .6s;"></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--text-muted);margin-top:12px;">
+        ${yangDiff > 0 ? `후반부로 갈수록 양(陽) 에너지가 +${yangDiff}효 증가 — 적극성·외향성이 강해집니다.`
+          : yangDiff < 0 ? `후반부로 갈수록 음(陰) 에너지가 ${Math.abs(yangDiff)}효 증가 — 깊이·수용성이 강해집니다.`
+          : '전후반 양음 구성이 동일합니다 — 에너지 방향이 일관됩니다.'}
+      </p>
+    </div>` +
+    evLoadingHtml;
+
+  // Claude API — 선후천 교차 에너지 심층 분석
+  (async () => {
+    const prompt = `하락이수 선후천 분석입니다.
+
+선천괘(타고난 기질): ${sc.name}(${sc.guaNo}번) / 괘사: ${sc.dansa || ''} / 실용해석: ${sc.practical || ''}
+원당효(핵심에너지): ${wondang}효 / 효사: ${wondangYao?.text_ko || ''} / 해설: ${wondangYao?.comment_ko || ''}
+후천괘(인생후반): ${hc.name}(${hc.guaNo}번) / 괘사: ${hc.dansa || ''} / 실용해석: ${hc.practical || ''}
+관계유형: ${relationLabel}
+성별: ${gender === 'male' ? '남성' : '여성'} / 출생: ${birthYear}년
+
+두 괘의 에너지 흐름을 교차 분석해서 아래 JSON 형식으로만 출력하세요:
+{
+  "transition": "전반→후반 전환의 핵심 메시지 (2~3문장)",
+  "synergy": "선천과 후천의 에너지가 만나 만들어내는 시너지 또는 긴장 (2문장)",
+  "fortyplus": "40대 이후 이 사람에게 찾아올 변화와 기회 (2~3문장)",
+  "warning": "이 에너지 구조에서 주의해야 할 함정 (1~2문장)",
+  "keyword": ["선후천을 관통하는 핵심 키워드 3개"]
+}`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await resp.json();
+      const raw  = data.content?.map(c => c.text || '').join('').trim();
+      const p    = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+      const card = document.getElementById('sc-hc-ai-card');
+      if (!card) return;
+      card.innerHTML = `
+        <p style="font-size:.68rem;color:var(--accent-light);margin-bottom:16px;letter-spacing:.05em;">✦ 선후천 교차 에너지 분석</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+          ${p.keyword.map(k => `<span style="padding:4px 12px;border-radius:20px;background:rgba(124,58,237,.12);color:var(--accent-light);font-size:.78rem;">${k}</span>`).join('')}
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+          <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:6px;">전반 → 후반 전환의 핵심</p>
+          <p style="line-height:1.85;font-size:.9rem;">${p.transition}</p>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+          <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:6px;">두 에너지의 시너지·긴장</p>
+          <p style="line-height:1.85;font-size:.9rem;">${p.synergy}</p>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+          <p style="font-size:.68rem;color:#818cf8;margin-bottom:6px;">40대 이후 찾아올 변화</p>
+          <p style="line-height:1.85;font-size:.9rem;">${p.fortyplus}</p>
+        </div>
+        <div style="padding:12px 14px;background:rgba(248,113,113,.06);border-radius:8px;border-left:3px solid #f87171;">
+          <p style="font-size:.68rem;color:#f87171;margin-bottom:4px;">주의할 함정</p>
+          <p style="font-size:.88rem;line-height:1.7;">${p.warning}</p>
+        </div>`;
+    } catch(e) {
+      const card = document.getElementById('sc-hc-ai-card');
+      if (card) card.style.display = 'none';
+    }
+  })();
+  // ── 수리 탭
+  const suriRows = [...suri.chunganList.map((s,i)=>({label:`${['연','월','일','시'][i]}간 ${s.char}`, su:s.su, color:'var(--accent-light)'})),
+                    ...suri.jijiList.map((s,i)=>({label:`${['연','월','일','시'][i]}지 ${s.char}`, su:s.su, color:'#f472b6'}))];
+  document.getElementById('tab-suri').innerHTML =
+    infoBox(`<strong style="color:var(--text);">수리(數理)란?</strong><br>
+사주의 천간(天干)과 지지(地支) 각 글자에 고유한 숫자를 배정한 뒤, 그 합으로 괘를 도출하는 계산 과정입니다.<br><br>
+<strong style="color:var(--accent-light);">천수(天數)</strong>는 천간의 홀수 합으로 상괘(上卦·위 3효)를 결정하고,
+<strong style="color:#f472b6;">지수(地數)</strong>는 지지의 짝수 합으로 하괘(下卦·아래 3효)를 결정합니다.<br>
+남성은 천수→상괘, 지수→하괘 / 여성은 반대로 적용합니다.<br><br>
+8로 나눈 나머지가 8개 소성괘(건·태·이·진·손·감·간·곤) 중 하나에 배정되고, 상괘+하괘가 합쳐져 64괘 중 하나의 선천괘가 만들어집니다.`) +
+    `<div class="card">
+      <h3 style="font-weight:700;margin-bottom:16px;">수리 변환 과정</h3>
+      <div class="grid-2" style="margin-bottom:20px;">
+        ${suriRows.map(r=>`
+          <div style="padding:10px 14px;background:var(--surface2);border-radius:8px;display:flex;justify-content:space-between;">
+            <span style="color:var(--text-muted);font-size:.85rem;">${r.label}</span>
+            <span style="font-weight:700;color:${r.color};">${r.su}</span>
+          </div>`).join('')}
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;gap:20px;flex-wrap:wrap;">
+        <div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">천수 (홀수 합)</p><p style="font-size:1.8rem;font-weight:800;color:var(--accent-light);">${suri.cheonsu}</p></div>
+        <div style="align-self:center;font-size:1.4rem;color:var(--text-muted);">+</div>
+        <div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">지수 (짝수 합)</p><p style="font-size:1.8rem;font-weight:800;color:#f472b6;">${suri.jisu}</p></div>
+        <div style="align-self:center;font-size:1.4rem;color:var(--text-muted);">=</div>
+        <div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">합계</p><p style="font-size:1.8rem;font-weight:800;">${suri.cheonsu+suri.jisu}</p></div>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:var(--surface2);border-radius:8px;">
+        <p style="font-size:.8rem;color:var(--text-muted);line-height:1.8;">
+          <strong style="color:var(--text);">선천괘 도출:</strong>
+          ${gender==='male'?'천':'지'}수 ${suri.csF} ÷ 8 = 나머지 ${suri.csF%8||8} → 상괘 ·
+          ${gender==='male'?'지':'천'}수 ${suri.jsF} ÷ 8 = 나머지 ${suri.jsF%8||8} → 하괘<br>
+          <strong style="color:var(--text);">원당효 도출:</strong>
+          (${suri.cheonsu}+${suri.jisu}) ÷ 6 = 나머지 ${(suri.cheonsu+suri.jisu)%6||6} → ${wondang}효
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3 style="font-weight:700;margin-bottom:6px;">각 글자의 수리 풀이</h3>
+      <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px;">글자 기질 + 수리 숫자 → 선천괘에 미친 영향</p>
+      ${(()=>{
+        const CHAR_MEANING = {
+          甲:{keyword:'강한 추진력·독립심', desc:'새로운 시작을 주도하는 기질'},
+          乙:{keyword:'유연한 적응력·실리', desc:'관계 속에서 실리를 챙기는 능력'},
+          丙:{keyword:'밝은 표현력·화려함', desc:'주목받고 드러나는 에너지'},
+          丁:{keyword:'섬세한 직관·집중력', desc:'깊이 파고드는 내면의 힘'},
+          戊:{keyword:'안정·포용력', desc:'중심을 잡고 주변을 품는 기질'},
+          己:{keyword:'자기 원칙·신중함', desc:'내실을 다지는 힘'},
+          庚:{keyword:'결단력·강한 의지', desc:'강하게 밀어붙이는 추진 에너지'},
+          辛:{keyword:'정밀함·완벽주의', desc:'섬세하게 다듬는 기질'},
+          壬:{keyword:'유동적 통찰·지혜', desc:'흐름을 읽고 유연하게 대응'},
+          癸:{keyword:'완성·깊은 감수성', desc:'마무리와 영적 사유의 힘'},
+          子:{keyword:'응축된 시작·잠재력', desc:'폭발 직전의 응축된 에너지'},
+          丑:{keyword:'인내·단단한 성장', desc:'느리지만 묵묵히 쌓아가는 힘'},
+          寅:{keyword:'용맹한 도전·활동성', desc:'움직이고 개척하는 힘'},
+          卯:{keyword:'빠른 성장·소통', desc:'인간관계와 소통의 재능'},
+          辰:{keyword:'포용력·전환점', desc:'변화를 수용하고 방향을 잡는 능력'},
+          巳:{keyword:'통찰·전략적 사고', desc:'깊이 생각하고 전략적으로 움직임'},
+          午:{keyword:'최고조 에너지·표출', desc:'화려하게 빛나고 드러나는 기질'},
+          未:{keyword:'성숙·내면의 깊이', desc:'삶에 배어나오는 내면의 결실'},
+          申:{keyword:'날카로운 판단력', desc:'빠르게 결정하고 실행하는 능력'},
+          酉:{keyword:'완성도·정제된 미', desc:'마무리를 잘하는 섬세한 힘'},
+          戌:{keyword:'전환 수용·재정비', desc:'삶의 고비마다 새롭게 정비'},
+          亥:{keyword:'내면의 힘·준비', desc:'조용히 에너지를 모으는 기질'},
+        };
+        // 8개 소성괘 이름
+        const PALGU = ['건(乾)','태(兌)','이(離)','진(震)','손(巽)','감(坎)','간(艮)','곤(坤)'];
+        const csF = suri.csF, jsF = suri.jsF;
+        const sangGua = PALGU[(csF % 8 || 8) - 1];
+        const haGua   = PALGU[(jsF % 8 || 8) - 1];
+
+        const allChars = [
+          ...suri.chunganList.map((s,i)=>({char:s.char, su:s.su, label:`${['연','월','일','시'][i]}간`, isGan:true})),
+          ...suri.jijiList.map((s,i)=>({char:s.char, su:s.su, label:`${['연','월','일','시'][i]}지`, isGan:false})),
+        ];
+
+        return allChars.map(c=>{
+          const m = CHAR_MEANING[c.char] || {keyword:'—', desc:'—'};
+          const isOdd = c.su % 2 !== 0;
+          const suType = isOdd ? '홀수→천수' : '짝수→지수';
+          const suColor = isOdd ? 'var(--accent-light)' : '#f472b6';
+
+          // 이 글자가 상괘/하괘 중 어디에 기여했는지
+          let roleText = '';
+          if (isOdd) {
+            // 천수에 포함
+            const role = gender==='male' ? `상괘 ${sangGua} 형성에 기여` : `하괘 ${haGua} 형성에 기여`;
+            roleText = role;
+          } else {
+            const role = gender==='male' ? `하괘 ${haGua} 형성에 기여` : `상괘 ${sangGua} 형성에 기여`;
+            roleText = role;
+          }
+
+          return `
+          <div style="padding:14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-size:1.3rem;font-weight:800;color:${c.isGan?'var(--accent-light)':'#f472b6'};">${c.char}</span>
+              <div>
+                <span style="font-size:.72rem;color:var(--text-muted);">${c.label}</span>
+                <span style="font-size:.72rem;margin-left:8px;padding:1px 7px;border-radius:20px;background:rgba(124,58,237,.12);color:${suColor};">${suType} · ${c.su}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;font-size:.82rem;flex-wrap:wrap;">
+              <span style="color:var(--text);">${m.keyword}</span>
+              <span style="color:var(--text-muted);">→</span>
+              <span style="color:var(--text-muted);">${m.desc}</span>
+              <span style="color:var(--border);">|</span>
+              <span style="color:var(--gold);font-size:.78rem;">⟹ ${roleText}</span>
+            </div>
+          </div>`;
+        }).join('');
+      })()}
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3 style="font-weight:700;margin-bottom:14px;">천수 · 지수 총평</h3>
+      ${(()=>{
+        const cs = suri.cheonsu, js = suri.jisu, total = cs + js;
+        const csComment = cs <= 15
+          ? '천수가 낮은 편입니다. 강하게 밀어붙이기보다 내실을 다지고 협력하는 방식이 잘 맞습니다.'
+          : cs <= 25
+          ? '천수가 중간 범위입니다. 추진력과 신중함이 균형을 이루며, 상황에 따라 유연하게 대응합니다.'
+          : '천수가 높은 편입니다. 강한 추진력과 독립적인 기질을 가지며, 주도적으로 일을 이끌어가는 힘이 있습니다.';
+        const jsComment = js <= 15
+          ? '지수가 낮은 편입니다. 현실적 안정보다 변화와 이상을 추구하는 경향이 있습니다.'
+          : js <= 25
+          ? '지수가 중간 범위입니다. 현실 감각과 이상 사이에서 균형을 잡아가는 기질입니다.'
+          : '지수가 높은 편입니다. 현실적이고 안정 지향적이며, 꾸준히 기반을 쌓아가는 능력이 뛰어납니다.';
+        const totalComment = total <= 30
+          ? '전체 에너지 총량이 낮습니다. 소수에 집중하고 에너지를 아끼며 깊이 있게 파고드는 삶이 유리합니다.'
+          : total <= 50
+          ? '균형 잡힌 에너지 총량입니다. 다양한 분야에서 고루 능력을 발휘할 수 있는 구조입니다.'
+          : '에너지 총량이 높습니다. 활동 범위가 넓고 여러 방면으로 에너지를 쏟는 삶을 살게 됩니다.';
+        return `
+          <div style="padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">
+            <p style="font-size:.72rem;color:var(--accent-light);margin-bottom:4px;">천수 ${cs} — 하늘의 기운 (추진·의지·표현)</p>
+            <p style="font-size:.85rem;line-height:1.7;">${csComment}</p>
+          </div>
+          <div style="padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">
+            <p style="font-size:.72rem;color:#f472b6;margin-bottom:4px;">지수 ${js} — 땅의 기운 (현실·안정·수용)</p>
+            <p style="font-size:.85rem;line-height:1.7;">${jsComment}</p>
+          </div>
+          <div style="padding:12px 14px;background:var(--surface2);border-radius:8px;">
+            <p style="font-size:.72rem;color:var(--gold);margin-bottom:4px;">합계 ${total} — 전체 에너지 총량</p>
+            <p style="font-size:.85rem;line-height:1.7;">${totalComment}</p>
+          </div>`;
+      })()}
+    </div>`;
+
+  // 로딩 숨기기
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('result-wrap').style.display    = 'block';
+
+  // 프롬프트 이벤트 연결
+  connectPromptBoxes();
+}
+
+function connectPromptBoxes() {
+  document.querySelectorAll('#prompt-question').forEach(ta => {
+    ta.addEventListener('input', updatePreviews);
+  });
+  updatePreviews();
+}
+
+function updatePreviews() {
+  if (!RESULT) return;
+  const q = document.getElementById('prompt-question')?.value || '';
+  const text = buildPrompt(RESULT, q);
+  document.querySelectorAll('#prompt-preview').forEach(el => el.textContent = text);
+}
+
+function copyPrompt() {
+  if (!RESULT) return;
+  const q = document.getElementById('prompt-question')?.value || '';
+  navigator.clipboard.writeText(buildPrompt(RESULT, q)).then(() => {
+    const btn = document.getElementById('copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ 복사됨!';
+    btn.style.background = '#16a34a';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = 'var(--accent)'; }, 2500);
+  });
+}
+
+main();
+</script>
 </body>
 </html>
