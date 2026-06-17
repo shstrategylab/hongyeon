@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홍연 마스터 — 가족 길방 비교</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .member-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--bg-panel);
+    }
+    .member-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .member-label {
+      font-size: 13px;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .remove-member-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .remove-member-btn:hover { color: #e07060; border-color: #e07060; }
+    .form-group { margin-bottom: 8px; }
+    .form-row { gap: 8px; margin-bottom: 0; }
+
+    .add-member-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed var(--border-glow);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--gold);
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    .add-member-btn:hover { background: rgba(180,140,80,0.06); }
+
+    /* 비교 결과 영역 */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .compare-col {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--bg-panel);
+    }
+    .compare-col-name {
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+    .compare-gung-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 3px 0;
+    }
+    .compare-gung-row.is-gil { color: #6dbf87; }
+    .compare-gung-row.is-hyung { color: #e07060; }
+
+    .overlap-section {
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(180,140,80,0.05);
+      margin-bottom: 16px;
+    }
+    .overlap-title {
+      font-size: 14px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .overlap-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+      color: var(--text-main);
+    }
+    .overlap-item:last-child { border-bottom: none; }
+    .overlap-count {
+      background: rgba(109,191,135,0.15);
+      color: #6dbf87;
+      border: 1px solid rgba(109,191,135,0.3);
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .overlap-names {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .empty-overlap {
+      font-size: 13px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 12px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <script src="js/header.js"></script>
+
+  <main class="container">
+
+    <div class="card">
+      <div class="card-title">가족 길방 비교</div>
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.7; margin-bottom:14px;">
+        가족 구성원(최대 4명)의 생년월일시를 입력하면 각자의 길방·흉방을 비교하고,
+        <b style="color:var(--text-main);">모두에게 공통으로 좋은 방위</b>를 찾아드립니다.
+        집의 좌향이나 이사 방향은 가장(주 소득자) 명반을 우선 참고하시고,
+        개인 침실·개인 일정은 각자의 명반을 따로 보시는 것을 추천합니다.
+      </p>
+
+      <div id="memberList"></div>
+
+      <button type="button" class="add-member-btn" id="addMemberBtn" onclick="addMember()">
+        + 가족 구성원 추가
+      </button>
+
+      <button type="button" class="btn btn-primary" onclick="runCompare()">
+        ✦ 길방 비교 시작
+      </button>
+    </div>
+
+    <!-- 비교 결과 -->
+    <div id="compareResult" style="display:none;">
+
+      <div class="card overlap-section">
+        <div class="overlap-title">🏠 모두에게 좋은 공통 길방</div>
+        <div id="overlapList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">개인별 길방·흉방 TOP3</div>
+        <div class="compare-grid" id="compareGrid"></div>
+      </div>
+    </div>
+
+    <div style="padding-bottom: 32px;"></div>
+
+  </main>
+
+  <!-- 데이터 + 엔진 -->
+  <script src="js/data-jeolgi.js"></script>
+  <script src="js/data-ganji.js"></script>
+  <script src="js/data-gugung.js"></script>
+  <script src="js/engine.js"></script>
+
+  <script>
+    const MAX_MEMBERS = 4;
+    const DEFAULT_LABELS = ["가장", "배우자", "자녀1", "자녀2"];
+    let memberCount = 0;
+
+    // 시지 → 대표 시간(hour) 변환 (index.html과 동일)
+    const SIJI_TO_HOUR = {
+      자:23, 축:1, 인:3, 묘:5, 진:7, 사:9,
+      오:11, 미:13, 신:15, 유:17, 술:19, 해:21
+    };
+
+    function memberTemplate(idx) {
+      return `
+        <div class="member-card" id="member-${idx}">
+          <div class="member-card-header">
+            <input type="text" class="form-input member-label-input" id="memberLabel-${idx}"
+              value="${DEFAULT_LABELS[idx] || ('구성원' + (idx+1))}"
+              style="font-size:13px; font-weight:600; color:var(--gold); border:none; background:transparent; padding:0; width:120px;">
+            ${idx > 1 ? `<button type="button" class="remove-member-btn" onclick="removeMember(${idx})">삭제</button>` : ""}
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">태어난 해</label>
+              <input class="form-input" type="number" id="year-${idx}" placeholder="예: 1990" min="1900" max="2025">
+            </div>
+            <div class="form-group">
+              <label class="form-label">월</label>
+              <select class="form-select" id="month-${idx}">
+                <option value="">월</option>
+                ${Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}월</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">일</label>
+              <input class="form-input" type="number" id="day-${idx}" placeholder="예: 15" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">태어난 시(時)</label>
+              <select class="form-select" id="siji-${idx}">
+                <option value="">모름</option>
+                <option value="자">자시 (23~01시)</option>
+                <option value="축">축시 (01~03시)</option>
+                <option value="인">인시 (03~05시)</option>
+                <option value="묘">묘시 (05~07시)</option>
+                <option value="진">진시 (07~09시)</option>
+                <option value="사">사시 (09~11시)</option>
+                <option value="오">오시 (11~13시)</option>
+                <option value="미">미시 (13~15시)</option>
+                <option value="신">신시 (15~17시)</option>
+                <option value="유">유시 (17~19시)</option>
+                <option value="술">술시 (19~21시)</option>
+                <option value="해">해시 (21~23시)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">성별</label>
+            <select class="form-select" id="gender-${idx}">
+              <option value="남">남성</option>
+              <option value="여">여성</option>
+            </select>
+          </div>
+        </div>
+      `;
+    }
+
+    function addMember() {
+      if (memberCount >= MAX_MEMBERS) {
+        alert(`최대 ${MAX_MEMBERS}명까지 비교 가능합니다.`);
+        return;
+      }
+      const idx = memberCount;
+      document.getElementById("memberList").insertAdjacentHTML("beforeend", memberTemplate(idx));
+      memberCount++;
+      updateAddBtnState();
+    }
+
+    function removeMember(idx) {
+      const el = document.getElementById(`member-${idx}`);
+      if (el) el.remove();
+    }
+
+    function updateAddBtnState() {
+      document.getElementById("addMemberBtn").style.display =
+        memberCount >= MAX_MEMBERS ? "none" : "block";
+    }
+
+    // 초기 2명(가장, 배우자) 기본 표시
+    addMember();
+    addMember();
+
+    // ── 길방 비교 실행 ──────────────────────────────
+    function runCompare() {
+      const members = [];
+      document.querySelectorAll(".member-card").forEach(card => {
+        const idx = card.id.split("-")[1];
+        const year  = parseInt(document.getElementById(`year-${idx}`).value);
+        const month = parseInt(document.getElementById(`month-${idx}`).value);
+        const day   = parseInt(document.getElementById(`day-${idx}`).value);
+        const siji  = document.getElementById(`siji-${idx}`).value;
+        const gender = document.getElementById(`gender-${idx}`).value;
+        const label = document.getElementById(`memberLabel-${idx}`).value || `구성원${idx}`;
+
+        if (!year || !month || !day) return; // 미입력 행은 스킵
+
+        const input = {
+          year, month, day,
+          hour: siji ? SIJI_TO_HOUR[siji] : 12,
+          siji: siji || "",
+          gender,
+        };
+        const result = runHongyeon(input);
+        members.push({ label, input, result });
+      });
+
+      if (members.length < 2) {
+        alert("최소 2명 이상의 생년월일을 입력해주세요.");
+        return;
+      }
+
+      renderCompare(members);
+    }
+
+    function renderCompare(members) {
+      document.getElementById("compareResult").style.display = "block";
+
+      // ① 개인별 길방·흉방 TOP3 카드
+      const grid = document.getElementById("compareGrid");
+      grid.innerHTML = members.map(m => {
+        const { giljung } = m.result;
+        const gilRows = giljung.gilbang.map(g =>
+          `<div class="compare-gung-row is-gil">✓ ${g.name}(${g.direction})</div>`
+        ).join("");
+        const hyungRows = giljung.hyungbang.map(g =>
+          `<div class="compare-gung-row is-hyung">✕ ${g.name}(${g.direction})</div>`
+        ).join("");
+        return `
+          <div class="compare-col">
+            <div class="compare-col-name">${m.label}</div>
+            ${gilRows}
+            <div style="border-top:1px solid var(--border); margin:6px 0;"></div>
+            ${hyungRows}
+          </div>
+        `;
+      }).join("");
+
+      // ② 공통 길방 산출 — 각자의 gilbang(TOP3)에 등장하는 궁 번호를 집계
+      const gungCount = {}; // gungNum → [{label, rank}]
+      members.forEach(m => {
+        m.result.giljung.gilbang.forEach((g, rank) => {
+          if (!gungCount[g.gungNum]) gungCount[g.gungNum] = [];
+          gungCount[g.gungNum].push({ label: m.label, rank: rank + 1, name: g.name, direction: g.direction });
+        });
+      });
+
+      // 2명 이상 겹치는 궁만 추출, 겹치는 인원 수 내림차순
+      const overlaps = Object.entries(gungCount)
+        .map(([gungNum, entries]) => ({ gungNum: parseInt(gungNum), entries }))
+        .filter(o => o.entries.length >= 2)
+        .sort((a, b) => b.entries.length - a.entries.length);
+
+      const overlapEl = document.getElementById("overlapList");
+      if (overlaps.length === 0) {
+        overlapEl.innerHTML = `<div class="empty-overlap">
+          가족 구성원의 길방이 서로 겹치지 않습니다.<br>
+          이런 경우 가장(주 소득자) 명반을 기준으로 집 전체 방위를 정하고,
+          나머지 구성원은 개인 공간·개인 일정에서 각자의 길방을 활용하시는 것을 추천합니다.
+        </div>`;
+      } else {
+        overlapEl.innerHTML = overlaps.map(o => {
+          const first = o.entries[0];
+          const names = o.entries.map(e => `${e.label}(${e.rank}위)`).join(", ");
+          return `
+            <div class="overlap-item">
+              <span class="overlap-count">${o.entries.length}명 일치</span>
+              <div>
+                <div><b>${first.name}</b> (${first.direction})</div>
+                <div class="overlap-names">${names}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      document.getElementById("compareResult").scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+
+</body>
+</html>
