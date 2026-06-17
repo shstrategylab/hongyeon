@@ -293,9 +293,9 @@
         <span id="compassTop">南 ↑</span>
       </div>
       <div style="display:flex; align-items:center; gap:4px;">
-        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">東</span>
+        <span id="compassLeft" style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">東</span>
         <div class="gugung-grid" id="gugungGrid" style="flex:1;"></div>
-        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">西</span>
+        <span id="compassRight" style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">西</span>
       </div>
       <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:0.05em;">
         <span id="compassBottom">↓ 北</span>
@@ -398,6 +398,9 @@
 
       document.getElementById('compassTop').textContent    = currentMapMode === 'traditional' ? '南 ↑' : '北 ↑';
       document.getElementById('compassBottom').textContent = currentMapMode === 'traditional' ? '↓ 北' : '↓ 南';
+      // 전통(남↑): 동이 왼쪽, 서가 오른쪽 / 현대 지도(북↑): 좌우 반전 → 서가 왼쪽, 동이 오른쪽
+      document.getElementById('compassLeft').textContent   = currentMapMode === 'traditional' ? '東' : '西';
+      document.getElementById('compassRight').textContent  = currentMapMode === 'traditional' ? '西' : '東';
 
       gridOrder.forEach(gungNum => {
         const g = board[gungNum];
