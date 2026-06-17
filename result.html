@@ -373,8 +373,11 @@
     let dongcheoNums  = new Set();
     let combinedMap   = {};       // showDetail에서도 참조
     let currentMapMode = 'traditional';
+    // 전통(남↑): [4손,9이,2곤 / 3진,5중,7태 / 8간,1감,6건]
+    // 현대(북↑): 전통 배치를 180도 회전(상하+좌우 모두 반전)
+    //            [6건,1감,8간 / 7태,5중,3진 / 2곤,9이,4손]
     const GRID_TRADITIONAL = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-    const GRID_MODERN      = [8, 1, 6, 3, 5, 7, 4, 9, 2];
+    const GRID_MODERN      = [6, 1, 8, 7, 5, 3, 2, 9, 4];
 
     // 방위 토글 — HTML onclick에서 직접 호출하므로 전역 함수로 선언
     function setMapMode(mode) {
