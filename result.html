@@ -216,6 +216,24 @@
       margin-top: 6px;
     }
     .sinsal-detail-block strong { color: #e07060; display: block; margin-bottom: 3px; }
+
+    /* ── 방위 토글 버튼 ── */
+    .map-toggle-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 11px;
+      padding: 5px 12px;
+      transition: all 0.2s;
+    }
+    .map-toggle-btn:hover, .map-toggle-btn.active {
+      border-color: var(--border-glow);
+      color: var(--gold);
+      background: rgba(180, 140, 80, 0.08);
+    }
   </style>
 </head>
 <body>
@@ -243,6 +261,14 @@
     <div class="card">
       <div class="card-title">구궁도 (세궁: <span id="segungLabel" class="text-gold">-</span>)</div>
 
+      <!-- 방위 배열 토글 -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--text-muted);">방위 배열:</span>
+        <button class="map-toggle-btn active" id="btnTraditional" onclick="setMapMode('traditional')">🧭 전통 역술 (남↑)</button>
+        <button class="map-toggle-btn" id="btnModern" onclick="setMapMode('modern')">🗺️ 현대 지도 (북↑)</button>
+        <span id="mapModeDesc" style="font-size:11px; color:var(--text-dim); margin-left:4px;">황제가 남쪽을 바라보는 전통 방식</span>
+      </div>
+
       <!-- 세궁 해설 -->
       <div class="segung-summary" id="segungSummary">
         <div class="segung-summary-left">
@@ -262,7 +288,18 @@
         <div id="dongcheoText"></div>
       </div>
 
-      <div class="gugung-grid" id="gugungGrid"></div>
+      <!-- 나침반 라벨 -->
+      <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:4px; letter-spacing:0.05em;">
+        <span id="compassTop">南 ↑</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">東</span>
+        <div class="gugung-grid" id="gugungGrid" style="flex:1;"></div>
+        <span style="font-size:11px; color:var(--text-dim); writing-mode:vertical-rl; letter-spacing:0.05em;">西</span>
+      </div>
+      <div style="text-align:center; font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:0.05em;">
+        <span id="compassBottom">↓ 北</span>
+      </div>
 
       <!-- 클릭 시 상세 표시 -->
       <div class="gung-detail" id="gungDetail">
@@ -438,11 +475,33 @@
         }).join("<br>");
       }
 
-      // 구궁도 그리드 렌더링
-      const gridOrder = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-      const grid = document.getElementById("gugungGrid");
-      grid.innerHTML = "";
+      // ── 방위 배열 모드 ─────────────────────────────────
+      // 전통(남↑): [4손,9이,2곤 / 3진,5중,7태 / 8간,1감,6건]
+      // 현대(북↑): [8간,1감,6건 / 3진,5중,7태 / 4손,9이,2곤]
+      const GRID_TRADITIONAL = [4, 9, 2, 3, 5, 7, 8, 1, 6];
+      const GRID_MODERN      = [8, 1, 6, 3, 5, 7, 4, 9, 2];
 
+      let currentMapMode = 'traditional';
+
+      function setMapMode(mode) {
+        currentMapMode = mode;
+        document.getElementById('btnTraditional').classList.toggle('active', mode === 'traditional');
+        document.getElementById('btnModern').classList.toggle('active', mode === 'modern');
+        document.getElementById('mapModeDesc').textContent = mode === 'traditional'
+          ? '황제가 남쪽을 바라보는 전통 방식'
+          : '우리가 학교에서 배운 현대 지도 방식';
+        renderGrid();
+      }
+
+      // 구궁도 그리드 렌더링
+      function renderGrid() {
+        const gridOrder = currentMapMode === 'traditional' ? GRID_TRADITIONAL : GRID_MODERN;
+        const grid = document.getElementById("gugungGrid");
+        grid.innerHTML = "";
+
+        // 방위 나침반 라벨 업데이트
+        document.getElementById('compassTop').textContent    = currentMapMode === 'traditional' ? '南 ↑' : '北 ↑';
+        document.getElementById('compassBottom').textContent = currentMapMode === 'traditional' ? '↓ 北' : '↓ 南';
       gridOrder.forEach(gungNum => {
         const g = board[gungNum];
         if (!g) return;
@@ -486,6 +545,9 @@
         cell.addEventListener("click", () => showDetail(g, isSegung));
         grid.appendChild(cell);
       });
+      } // end renderGrid
+
+      renderGrid(); // 초기 렌더링
 
       // 길흉 요약 — 결합 점수(생극 45% + 팔문 45% + 신살 10%) 기준 정렬
       const giljung = r.giljung || deriveGiljung(board, analysis.segungIndex);
