@@ -264,6 +264,11 @@ function runHongyeon(input) {
 //         신살이 있어도 길방으로 잘못 분류되는 문제가 있었음.
 //         수정 후: 신살 패널티가 생극·팔문과 동등한 수준으로 반영됨.
 //
+// [FIX 4] 팔문 tier "흉" 가드 추가.
+//         유혼·화해·귀혼·절체·절명은 생극 점수와 합산해도
+//         길방 TOP3에 오르지 않도록 필터링.
+//         (tier 필드는 data-gugung.js PALMUN에 추가됨)
+//
 // 점수 구조 (수정 후):
 //   combined = relationScore(0~90) * 0.45
 //            + palmunScore(0~95)   * 0.45
@@ -271,10 +276,11 @@ function runHongyeon(input) {
 //   → 최대 약 83점 / 신살 1개 시 최대 -30점 감점
 function deriveGiljung(board, segungIndex) {
   const scored = Object.values(board).map(g => {
-    const relationScore  = g.relation.score;
-    const palmunScore    = g.palmun?.score ?? 55;
+    const relationScore = g.relation.score;
+    const palmunScore   = g.palmun?.score ?? 55;
+    const palmunTier    = g.palmun?.tier  ?? "흉";   // tier 없으면 흉으로 보수적 처리
     // 신살 패널티: score가 음수(-25 ~ -30)이므로 * 1.0으로 실질 반영
-    const sinsalPenalty  = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
+    const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
     const combined = Math.max(
       0,
       Math.round(relationScore * 0.45 + palmunScore * 0.45 + sinsalPenalty * 1.0)
@@ -285,6 +291,7 @@ function deriveGiljung(board, segungIndex) {
       direction:     g.gungInfo.direction,
       palmunLabel:   g.palmun?.label || "",
       palmunDesc:    g.palmun?.desc  || "",
+      palmunTier,                              // tier 보존 (필터링용)
       relationLabel: g.relation.label,
       sinsalLabels:  (g.sinsal || []).map(s => s.label),
       combined,
@@ -292,12 +299,22 @@ function deriveGiljung(board, segungIndex) {
     };
   });
 
-  // 세궁 제외하고 길방·흉방 분류
+  // 세궁 제외하고 점수 내림차순 정렬
   const others = scored.filter(g => !g.isSegung);
   others.sort((a, b) => b.combined - a.combined);
 
+  // [FIX 4] 팔문 tier "길"인 궁만 길방 후보로 허용
+  //         → 유혼(遊魂) 이하 흉문이 길방에 오르는 모순 방지
+  const gilCandidates = others.filter(g => g.palmunTier === "길");
+
+  // 길방 후보가 3개 미만인 극단적 포국(흉문만 가득한 경우) 대비
+  // → tier 무관하게 상위 3개로 채움
+  const gilbang = gilCandidates.length >= 3
+    ? gilCandidates.slice(0, 3)
+    : others.slice(0, 3);
+
   return {
-    gilbang:   others.slice(0, 3),           // 상위 3개 = 길방
+    gilbang,
     hyungbang: others.slice(-3).reverse(),   // 하위 3개 = 흉방
     segung:    scored.find(g => g.isSegung),
   };
