@@ -215,16 +215,162 @@ function assembleBoard(jibanBoard, cheonbanBoard, segungIndex) {
 }
 
 
+// ── 8-b. 만세력 DB 기반 간지 자동 보완 ────────────
+// [신규] manse-db.js(일주 DB) + solar-terms-db.js(정확 절기 DB) +
+//        lunar_calendar.js(음양력 변환표, 1930~2050)가 로드되어 있고
+//        사용자가 간지를 직접 입력하지 않았다면 생년월일로부터
+//        일주(日柱)·연주·월주·절기를 정확히 채워준다.
+//        - 음력 입력(calType: 'lunar'/'leap')이면 먼저 lunar_calendar.js로
+//          양력으로 변환한 뒤, 변환된 양력 날짜로 나머지 단계를 동일하게 진행.
+//        - 윤달(leap)은 lunarToSolarDate(y, m, d, true)로 정확히 구분 처리.
+//        - DB 커버 범위(일주 1950~2050 / 절기 2010~2050 / 음양력 1930~2050)
+//          밖이면 채우지 않고 기존 근사 로직으로 자연히 폴백된다.
+function autoFillGanjiFromManseDB(input) {
+  const filled = { ...input };
+  let { year, month, day, calType } = input;
+
+  if (!year || !month || !day) return filled;
+
+  // ⓪ 음력 입력이면 먼저 양력으로 변환 (lunar_calendar.js 필요)
+  if ((calType === "lunar" || calType === "leap") && typeof lunarToSolarDate === "function") {
+    const isLeapMonth = calType === "leap";
+    const solarDate = lunarToSolarDate(year, month, day, isLeapMonth);
+    if (solarDate) {
+      // 변환된 양력 날짜로 이후 로직을 그대로 재사용
+      year  = solarDate.year;
+      month = solarDate.month;
+      day   = solarDate.day;
+      // filled에도 반영해야 runHongyeon()에서 올바른 양력 날짜를 사용함
+      filled.year  = year;
+      filled.month = month;
+      filled.day   = day;
+      filled._convertedFromLunar = true;
+      filled._solarDate = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    } else {
+      // 변환표 범위 밖(1930~2050 밖) — 변환 불가, 근사 모드로 폴백
+      return filled;
+    }
+  } else if (calType === "lunar" || calType === "leap") {
+    // lunar_calendar.js가 로드되지 않은 환경 — 기존처럼 근사 모드로 폴백
+    return filled;
+  }
+
+  // ① 일주(日柱) 자동 채움 — 사용자가 직접 입력 안 했을 때만
+  if (!filled.dayGan && typeof getDayGanjiFromDB === "function") {
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dayGanji = getDayGanjiFromDB(dateStr);
+    if (dayGanji) {
+      filled.dayGan = dayGanji.gan;
+      filled.dayJi  = dayGanji.ji;
+      filled._dayGanjiSource = "manse_db"; // 디버그/표기용
+    }
+  }
+
+  // ② 연주(年柱) 자동 채움 — 입춘 이전이면 전년도 간지 사용(절입 보정)
+  if (!filled.yearGan && typeof getYearGanjiFromDB === "function") {
+    let targetYear = year;
+    // 입춘(보통 2/4 전후) 이전 출생이면 전년도 간지를 써야 함
+    const isBeforeIpchun = (month === 1) || (month === 2 && day < 4);
+    if (isBeforeIpchun) targetYear = year - 1;
+
+    const yearGanji = getYearGanjiFromDB(targetYear);
+    if (yearGanji) {
+      filled.yearGan = yearGanji.gan;
+      filled.yearJi  = yearGanji.ji;
+      filled._yearGanjiSource = "manse_db";
+    }
+  }
+
+  // ③ 정확한 절기 키 — solar-terms-db.js가 있고 범위 내일 때만 덮어씀
+  if (typeof getExactJeolgiKey === "function") {
+    const exactKey = getExactJeolgiKey(year, month, day);
+    if (exactKey) {
+      filled._exactJeolgiKey = exactKey; // runHongyeon에서 우선 사용
+    }
+  }
+
+  // ④ 월주(月柱) 자동 채움 — 절기 키 + 연간(年干)이 확보된 후에만 가능
+  //    (연간은 ②에서 DB로 채워졌거나 사용자가 직접 입력한 값을 사용)
+  if (!filled.monthGan && typeof getMonthGanjiFromJeolgi === "function") {
+    const jeolgiForMonth = filled._exactJeolgiKey || getCurrentJeolgi(month, day);
+    const yearGanForMonth = filled.yearGan; // ②에서 이미 채워졌거나 원래 입력값
+    if (yearGanForMonth) {
+      const { monthGan, monthJi } = getMonthGanjiFromJeolgi(jeolgiForMonth, yearGanForMonth);
+      if (monthGan && monthJi) {
+        filled.monthGan = monthGan;
+        filled.monthJi  = monthJi;
+        filled._monthGanjiSource = "manse_db";
+      }
+    }
+  }
+
+  return filled;
+}
+
+
+// ── 8-c. 월주(月柱) 자동 계산 ──────────────────────
+// 절기 키(jeolgiKey)로부터 월지(月支)를 정하고, 연간(年干)을 기준으로
+// 월두법(月頭法)에 따라 월간(月干)을 산출한다.
+// 월지 매핑: 입춘~우수 전=寅월, 우수~경칩 전=...(절기 12개가 12개월에 대응)
+const JEOLGI_TO_WOLJI = {
+  ipchun: "인", usu: "인",          // 입춘~경칩 전 = 인월
+  gyeongchip: "묘", chunbun: "묘",  // 경칩~청명 전 = 묘월
+  cheongmyeong: "진", gogu: "진",   // 청명~입하 전 = 진월
+  ipha: "사", soman: "사",          // 입하~망종 전 = 사월
+  mangjong: "오", haji: "오",       // 망종~소서 전 = 오월
+  soseo: "미", daeseo: "미",        // 소서~입추 전 = 미월
+  ipchu: "신", cheoseo: "신",       // 입추~백로 전 = 신월
+  baengno: "유", chubun: "유",      // 백로~한로 전 = 유월
+  hallo: "술", sanggang: "술",      // 한로~입동 전 = 술월
+  ipdong: "해", soseol: "해",       // 입동~대설 전 = 해월
+  daeseol: "자", dongji: "자",      // 대설~소한 전 = 자월
+  sohan: "축", daehan: "축",        // 소한~입춘 전 = 축월
+};
+
+// 월두법: 연간(年干)에 따라 정월(인월)의 월간이 달라짐
+// 갑·기년→丙(병)인월 / 을·경년→戊(무)인월 / 병·신년→庚(경)인월 /
+// 정·임년→壬(임)인월 / 무·계년→甲(갑)인월   (오호둔/둔월법 표준 공식)
+const WOLDU_START_GAN = {
+  갑: "병", 기: "병",
+  을: "무", 경: "무",
+  병: "경", 신: "경",
+  정: "임", 임: "임",
+  무: "갑", 계: "갑",
+};
+const GAN_ORDER = ["갑","을","병","정","무","기","경","신","임","계"];
+const WOLJI_ORDER_FROM_IN = ["인","묘","진","사","오","미","신","유","술","해","자","축"];
+
+function getMonthGanjiFromJeolgi(jeolgiKey, yearGan) {
+  const monthJi = JEOLGI_TO_WOLJI[jeolgiKey];
+  if (!monthJi || !yearGan || !WOLDU_START_GAN[yearGan]) {
+    return { monthGan: null, monthJi: monthJi || null };
+  }
+
+  const startGan = WOLDU_START_GAN[yearGan]; // 인월의 월간
+  const startIdx = GAN_ORDER.indexOf(startGan);
+  const jiIdx    = WOLJI_ORDER_FROM_IN.indexOf(monthJi); // 인월=0 기준 오프셋
+
+  const monthGan = GAN_ORDER[(startIdx + jiIdx) % 10];
+  return { monthGan, monthJi };
+}
+
+
 // ── 9. 메인 포국 함수 ─────────────────────────────
-function runHongyeon(input) {
+function runHongyeon(rawInput) {
+  // 만세력 DB로 빈 간지·정확 절기를 먼저 보완 (DB 미로드 시 안전하게 통과)
+  const input = autoFillGanjiFromManseDB(rawInput);
+
   const {
     year, month, day, hour, siji,
     yearGan, yearJi, monthGan, monthJi,
     dayGan,  dayJi,  hourGan,  hourJi,
+    _exactJeolgiKey, _dayGanjiSource, _yearGanjiSource,
+    _convertedFromLunar, _solarDate,
   } = input;
 
   const sijiChar   = hourJi || siji || getHourToSiji(hour || 12);
-  const jeolgiKey  = getCurrentJeolgi(month, day);
+  // 정확 절기 DB(2010~2050)가 있으면 우선 사용, 없으면 근사 로직 폴백
+  const jeolgiKey  = _exactJeolgiKey || getCurrentJeolgi(month, day);
   const samwonKey  = getSamwon(dayGan, dayJi, monthJi);
   const { guksu: baseGuksu, type, jeolgiName } = getBaseGuksu(jeolgiKey, samwonKey);
 
@@ -242,11 +388,18 @@ function runHongyeon(input) {
   const giljung = deriveGiljung(board, segungIndex);
 
   const hasSaju = !!(yearGan && monthGan && dayGan);
-  const warning = hasSaju ? null
-    : "사주팔자 간지를 입력하지 않아 절기 기반 근사값으로 포국했습니다.";
+  const isAutoFilled = !!(_dayGanjiSource || _yearGanjiSource);
+  const warning = hasSaju
+    ? null // 직접입력 또는 DB자동보완(양력/음력 변환 포함) 모두 정상 — 경고 없음
+    : "사주팔자 간지를 입력하지 않아 절기 기반 근사값으로 포국했습니다. (만세력 DB 범위 밖)";
 
   return {
-    meta:     { jeolgiKey, jeolgiName, type, baseGuksu, samwonKey, sijiChar, warning },
+    meta: {
+      jeolgiKey, jeolgiName, type, baseGuksu, samwonKey, sijiChar, warning,
+      isAutoFilled,
+      convertedFromLunar: !!_convertedFromLunar, // 음력→양력 변환이 일어났는지
+      solarDateUsed: _solarDate || null,         // 변환된(또는 원래) 양력 날짜
+    },
     analysis: {
       jibanHong, cheonbanHong, segungIndex,
       segungName:   GUGUNG[segungIndex]?.name || "",
