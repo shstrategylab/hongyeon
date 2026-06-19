@@ -404,11 +404,16 @@ function runHongyeon(rawInput) {
 
   const sijiChar   = hourJi || siji || getHourToSiji(hour || 12);
 
-  // 시주(時柱) — 시두법(時頭法)으로 계산식 우선 산출. 일간이 없으면 직접입력값으로 폴백.
-  const hourCalc        = getHourGanjiFromDayGan(dayGan, sijiChar);
-  const hourGanFinal     = hourCalc.hourGan || hourGan || null;
+  // 시(時)를 실제로 선택/입력했는지 여부 — "모르면 비워두세요" 케이스를 구분하기 위함
+  const hasRealSiji = !!(siji || hourJi);
+
+  // 시주(時柱) — 시두법(時頭法)으로 계산식 우선 산출.
+  // 단, 태어난 시를 실제로 모르는(비워둔) 경우에는 시간을 정오로 임의 추정해
+  // 시주 천간까지 계산에 끼워넣지 않는다(기존 동작과 동일하게 시주는 미상 처리).
+  const hourCalc        = hasRealSiji ? getHourGanjiFromDayGan(dayGan, sijiChar) : { hourGan: null };
+  const hourGanFinal     = hourCalc.hourGan || (hasRealSiji ? hourGan : null) || null;
   const hourJiFinal      = sijiChar;
-  const hourGanjiSource  = hourCalc.hourGan ? "calc" : (hourGan ? "manual" : "none");
+  const hourGanjiSource  = hourCalc.hourGan ? "calc" : (hasRealSiji && hourGan ? "manual" : "none");
 
   // 정확 절기 DB(2010~2050)가 있으면 우선 사용, 없으면 근사 로직 폴백
   const jeolgiKey  = _exactJeolgiKey || getCurrentJeolgi(month, day);
@@ -541,9 +546,16 @@ function deriveGiljung(board, segungIndex) {
     ...hyungTier.slice(0, Math.max(0, 3 - gilTier.length)),
   ].slice(0, 3);
 
+  // [FIX 5] 길방·흉방 상호 배타 처리
+  //         8문 등급은 좋지만(예: 천의) 신살 페널티 등으로 종합 점수가 낮아진 방이
+  //         길방·흉방 양쪽에 동시에 뜨는 모순을 방지한다. 이미 길방에 뽑힌 궁은
+  //         흉방 후보에서 제외한 뒤, 남은 궁 중 하위 3개를 흉방으로 삼는다.
+  const gilGungNums = new Set(gilbang.map(g => g.gungNum));
+  const hyungCandidates = others.filter(g => !gilGungNums.has(g.gungNum));
+
   return {
     gilbang,
-    hyungbang: others.slice(-3).reverse(),   // 하위 3개 = 흉방
+    hyungbang: hyungCandidates.slice(-3).reverse(),   // 길방을 제외한 하위 3개 = 흉방
     segung:    scored.find(g => g.isSegung),
   };
 }
