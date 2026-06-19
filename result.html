@@ -36,6 +36,16 @@
       margin-left: 2px;
     }
 
+    .meta-bar-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+    .meta-bar-sub {
+      color: var(--text-dim);
+      font-weight: 400;
+    }
     .meta-bar {
       display: flex;
       flex-wrap: wrap;
@@ -50,6 +60,7 @@
       font-size: 11px;
       color: var(--text-muted);
       letter-spacing: 0.05em;
+      cursor: help;
     }
     .meta-tag span { color: var(--gold); }
 
@@ -278,13 +289,14 @@
       <div class="input-info-tags" id="inputInfoGrid"></div>
     </div>
 
-    <!-- 메타 정보 -->
+    <!-- 메타 정보 (포국 기준표) -->
+    <div class="meta-bar-title">📐 포국 기준 <span class="meta-bar-sub">— 아래 구궁도를 짠 근거가 되는 값입니다 (각 항목에 마우스를 올리면 설명이 보여요)</span></div>
     <div class="meta-bar" id="metaBar">
-      <div class="meta-tag">절기: <span id="jeolgiName">-</span></div>
-      <div class="meta-tag">구분: <span id="dunType">-</span></div>
-      <div class="meta-tag">국수: <span id="baseGuksu">-</span>국</div>
-      <div class="meta-tag">지반수: <span id="jibansu">-</span></div>
-      <div class="meta-tag">천반수: <span id="cheonbansu">-</span></div>
+      <div class="meta-tag" title="24절기 중 이 명식의 시간적 기준이 되는 절기입니다.">절기: <span id="jeolgiName">-</span></div>
+      <div class="meta-tag" title="양둔(陽遁)·음둔(陰遁) — 절기에 따라 숫자가 도는 방향(순행/역행)을 정합니다.">구분: <span id="dunType">-</span></div>
+      <div class="meta-tag" title="局數 — 구궁판에 숫자를 배치하는 시작 기준점(1~9국)입니다.">국수: <span id="baseGuksu">-</span>국</div>
+      <div class="meta-tag" title="地盤數 — 바뀌지 않는 바닥 자리의 기준수입니다.">지반수: <span id="jibansu">-</span></div>
+      <div class="meta-tag" title="天盤數 — 사주의 기운(홍국수)에 따라 움직여 올라앉은 수로, 실제 길흉 해석의 핵심입니다.">천반수: <span id="cheonbansu">-</span></div>
     </div>
 
     <!-- 경고 메시지 -->
