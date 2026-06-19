@@ -548,19 +548,27 @@
       }
 
       const sajuParts = [];
-      if (input.yearGan && input.yearJi)   sajuParts.push(`${input.yearGan}${input.yearJi}`);
-      if (input.monthGan && input.monthJi) sajuParts.push(`${input.monthGan}${input.monthJi}`);
-      if (input.dayGan && input.dayJi)     sajuParts.push(`${input.dayGan}${input.dayJi}`);
-      if (input.hourGan && input.hourJi)   sajuParts.push(`${input.hourGan}${input.hourJi}`);
+      if (r?.analysis?.yearGanji)  sajuParts.push(r.analysis.yearGanji);
+      if (r?.analysis?.monthGanji) sajuParts.push(r.analysis.monthGanji);
+      if (r?.analysis?.dayGanji)   sajuParts.push(r.analysis.dayGanji);
+      if (r?.analysis?.hourGanji)  sajuParts.push(r.analysis.hourGanji);
       const sajuLabel = sajuParts.length
         ? sajuParts.join(" ")
-        : (r?.meta?.isAutoFilled ? "간지 자동계산(만세력)" : "간지 미입력(근사 포국)");
+        : (r?.meta?.isAutoFilled ? "간지 자동계산(만세력)" : "간지 미산출(근사 포국)");
+      const sajuTitle = r?.meta?.isAutoFilled
+        ? "만세력 계산식으로 산출된 사주팔자(결과는 항상 이 계산값을 우선 적용합니다)."
+        : "절기 기반 근사값입니다.";
+
+      const mismatchTag = r?.meta?.ganjiNotice
+        ? `<span class="input-info-tag" style="border-color:rgba(220,180,60,0.5); color:#ddb840;" title="${r.meta.ganjiNotice}">⚠️ 직접입력과 계산값 다름 — 계산값 적용</span>`
+        : "";
 
       grid.innerHTML = `
         <span class="input-info-tag">${birthLabel}</span>
         <span class="input-info-tag">${sijiLabel}</span>
         <span class="input-info-tag">${genderLabel}</span>
-        <span class="input-info-tag">사주 <strong>${sajuLabel}</strong></span>
+        <span class="input-info-tag" title="${sajuTitle}">사주 <strong>${sajuLabel}</strong></span>
+        ${mismatchTag}
       `;
       card.style.display = "block";
     }
