@@ -203,7 +203,8 @@
   <!-- 음양력 변환 DB (1930~2050) -->
   <script src="js/lunar_calendar.js"></script>
 
-  <!-- 절기 정확 DB -->
+  <!-- 만세력 DB (정확한 일주·연주·절기 계산) -->
+  <script src="js/manse-db.js"></script>
   <script src="data/solar_terms_db.js"></script>
 
   <!-- 데이터 + 엔진 -->
@@ -215,53 +216,8 @@
   <script src="js/firebase.js"></script>
 
   <script>
-    // ── 만세력 일주 DB(JSON) 로더 ─────────────────────
-    // 실제 서버 경로가 data/manse_100_db.json(원본 JSON)이라
-    // js/manse-db.js 같은 변환 파일 없이 fetch로 직접 불러와 사용한다.
-    let _manseDBCache = null;
-    async function loadManseDB() {
-      if (_manseDBCache) return _manseDBCache;
-      try {
-        const res = await fetch("data/manse_100_db.json");
-        _manseDBCache = await res.json();
-      } catch (e) {
-        console.warn("만세력 DB 로드 실패 — 근사 모드로 동작합니다.", e);
-        _manseDBCache = null;
-      }
-      return _manseDBCache;
-    }
-
-    const GAN_HANJA_TO_KO = { "甲":"갑","乙":"을","丙":"병","丁":"정","戊":"무",
-                              "己":"기","庚":"경","辛":"신","壬":"임","癸":"계" };
-    const JI_HANJA_TO_KO  = { "子":"자","丑":"축","寅":"인","卯":"묘","辰":"진","巳":"사",
-                              "午":"오","未":"미","申":"신","酉":"유","戌":"술","亥":"해" };
-
-    // engine.js의 autoFillGanjiFromManseDB가 호출하는 함수 — DB 로드 후 전역에 정의됨
-    function getDayGanjiFromDB(dateStr) {
-      if (!_manseDBCache) return null;
-      const ganji = _manseDBCache.daily_cache[dateStr];
-      if (!ganji) return null;
-      return { gan: GAN_HANJA_TO_KO[ganji[0]] || null, ji: JI_HANJA_TO_KO[ganji[1]] || null };
-    }
-
-    function getYearGanjiFromDB(year) {
-      if (!_manseDBCache) return null;
-      const yearData = _manseDBCache.years[String(year)];
-      if (!yearData) return null;
-      const yg = yearData.year_ganji;
-      return { gan: GAN_HANJA_TO_KO[yg[0]] || null, ji: JI_HANJA_TO_KO[yg[1]] || null };
-    }
-
-    // 페이지 로드 시 미리 한 번 로드(캐싱) — submit 시 지연 최소화
-    loadManseDB();
-  </script>
-
-  <script>
     document.getElementById("sajuForm").addEventListener("submit", async function(e) {
       e.preventDefault();
-
-      // 만세력 DB가 아직 로드 중이면 완료까지 대기
-      await loadManseDB();
 
       // 시지 → 대표 시간(hour) 변환
       const sijiToHour = {
