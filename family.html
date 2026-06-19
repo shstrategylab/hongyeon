@@ -185,52 +185,15 @@
   <!-- 음양력 변환 DB (1930~2050) -->
   <script src="js/lunar_calendar.js"></script>
 
-  <!-- 절기 정확 DB -->
-  <script src="data/solar_terms_db.js"></script>
+  <!-- 만세력 DB (정확한 일주·연주·절기 계산) -->
+  <script src="js/manse-db.js"></script>
+  <script src="js/solar-terms-db.js"></script>
 
   <!-- 데이터 + 엔진 -->
   <script src="js/data-jeolgi.js"></script>
   <script src="js/data-ganji.js"></script>
   <script src="js/data-gugung.js"></script>
   <script src="js/engine.js"></script>
-
-  <script>
-    // ── 만세력 일주 DB(JSON) 로더 ─────────────────────
-    let _manseDBCache = null;
-    async function loadManseDB() {
-      if (_manseDBCache) return _manseDBCache;
-      try {
-        const res = await fetch("data/manse_100_db.json");
-        _manseDBCache = await res.json();
-      } catch (e) {
-        console.warn("만세력 DB 로드 실패 — 근사 모드로 동작합니다.", e);
-        _manseDBCache = null;
-      }
-      return _manseDBCache;
-    }
-
-    const GAN_HANJA_TO_KO = { "甲":"갑","乙":"을","丙":"병","丁":"정","戊":"무",
-                              "己":"기","庚":"경","辛":"신","壬":"임","癸":"계" };
-    const JI_HANJA_TO_KO  = { "子":"자","丑":"축","寅":"인","卯":"묘","辰":"진","巳":"사",
-                              "午":"오","未":"미","申":"신","酉":"유","戌":"술","亥":"해" };
-
-    function getDayGanjiFromDB(dateStr) {
-      if (!_manseDBCache) return null;
-      const ganji = _manseDBCache.daily_cache[dateStr];
-      if (!ganji) return null;
-      return { gan: GAN_HANJA_TO_KO[ganji[0]] || null, ji: JI_HANJA_TO_KO[ganji[1]] || null };
-    }
-
-    function getYearGanjiFromDB(year) {
-      if (!_manseDBCache) return null;
-      const yearData = _manseDBCache.years[String(year)];
-      if (!yearData) return null;
-      const yg = yearData.year_ganji;
-      return { gan: GAN_HANJA_TO_KO[yg[0]] || null, ji: JI_HANJA_TO_KO[yg[1]] || null };
-    }
-
-    loadManseDB(); // 미리 로드 시작(캐싱)
-  </script>
 
   <script>
     const MAX_MEMBERS = 4;
@@ -343,8 +306,6 @@
 
     // ── 길방 비교 실행 ──────────────────────────────
     async function runCompare() {
-      await loadManseDB(); // 만세력 DB 로딩 완료까지 대기
-
       const members = [];
       document.querySelectorAll(".member-card").forEach(card => {
         const idx = card.id.split("-")[1];
