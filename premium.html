@@ -260,21 +260,44 @@
       document.getElementById("premiumCard").style.display = "block";
 
       const { analysis, board } = result;
-      const segungOhaeng = getOhaengChar(analysis.segungIndex);
+
+      // [v2.6 수정] 기존: 세궁의 "위치 번호" 오행 vs 타궁의 "위치 번호" 오행 비교
+      //             → 사람마다 달라지는 실제 홍국수 배치를 전혀 반영하지 못하던 문제.
+      // 수정: engine.js가 일간(日干) 기준으로 이미 계산해 둔 board[gung].hongguksu의
+      //       jibanSipsin/cheonSipsin(실제로 그 자리에 앉은 홍국수 기준 십신)을 그대로 사용.
+      //       일간을 모르면(절기 근사 포국) hongguksu.*Sipsin이 전부 null이 되어
+      //       자연스럽게 area.desc(기본 설명)로 폴백된다.
+      const hasIlgan = !!analysis.dayGanOhaeng;
 
       const areas = Object.entries(FORTUNE_AREA);
       let html = "";
 
+      if (!hasIlgan) {
+        html = `<p style="font-size:12px; color:var(--text-dim); line-height:1.8; padding:8px 0;">
+          일간(日干) 정보가 없어 십신 심층 풀이를 정밀하게 산출할 수 없습니다.
+          만세력으로 확인한 사주팔자(일주)를 입력하시면 재물·직장·학업 등
+          영역별 풀이가 정확해집니다.</p>`;
+      }
+
       areas.forEach(([key, area]) => {
-        // 해당 운세 영역과 연결된 십신 궁 찾기
-        const matched = Object.values(board).filter(g => {
-          if (g.gungNum === analysis.segungIndex) return false;
-          const targetOhaeng = getOhaengChar(g.gungNum);
-          const relCode = getYukhinRelCode(segungOhaeng, targetOhaeng);
-          return area.relCodes.includes(relCode);
+        // 해당 운세 영역(area.relCodes)에 해당하는 십신이 지반 또는 천반에 앉은 궁들을 찾는다.
+        // 지반/천반 둘 다 후보가 될 수 있으므로, 궁 단위가 아니라 (궁, layer) 단위로 모은다.
+        const candidates = [];
+        Object.values(board).forEach(g => {
+          if (g.gungNum === analysis.segungIndex) return; // 세궁(나 자신)은 제외
+          const h = g.hongguksu;
+          if (!h) return;
+          if (h.jibanRelCode && area.relCodes.includes(h.jibanRelCode)) {
+            candidates.push({ gung: g, layer: "jiban", sipsin: h.jibanSipsin });
+          }
+          if (h.cheonRelCode && area.relCodes.includes(h.cheonRelCode)) {
+            candidates.push({ gung: g, layer: "cheon", sipsin: h.cheonSipsin });
+          }
         });
 
-        const top = matched.sort((a, b) => b.relation.score - a.relation.score)[0];
+        const topCand = candidates.sort((a, b) => b.gung.relation.score - a.gung.relation.score)[0];
+        const top = topCand ? topCand.gung : null;
+
         const scoreLevel = top ? (top.relation.score >= 70 ? "high" : top.relation.score >= 40 ? "mid" : "low") : "mid";
         const template = top ? PREMIUM_TEMPLATE[scoreLevel] : null;
 
@@ -289,15 +312,12 @@
                 ${top.relation.badge}</span>` : ""}
             </div>
             <div class="summary-item-desc" style="font-size:13px;">
-              ${top ? template(top.gungInfo.name, top.gungInfo.direction,
-                (() => {
-                  const relCode = getYukhinRelCode(segungOhaeng, getOhaengChar(top.gungNum));
-                  const isYang = top.gungNum % 2 !== 0;
-                  const entry = YUKHIN_RULE[relCode];
-                  return entry ? (isYang ? entry.양?.name : entry.음?.name) || "" : "";
-                })()
-              ) : area.desc}
+              ${top ? template(top.gungInfo.name, top.gungInfo.direction, topCand.sipsin?.name || "") : area.desc}
             </div>
+            ${top ? `<div class="summary-item-desc" style="color:var(--text-dim); font-size:12px; margin-top:2px;">
+              📌 ${topCand.layer === "jiban" ? "지반" : "천반"} 홍국수 ${topCand.layer === "jiban" ? top.jibansu : top.cheonbansu} ·
+              ${topCand.sipsin?.label || ""} ${topCand.sipsin?.businessLabel ? `(${topCand.sipsin.businessLabel})` : ""}
+            </div>` : ""}
             ${top && top.relation.detail ? '<div class="summary-item-detail"><span>' + top.relation.detail + '</span></div>' : ""}
           </div>
         `;
