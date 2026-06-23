@@ -206,19 +206,30 @@ function buildCheonbanBoard(jibanBoard, jibanHong, cheonbanHong, type) {
 
 
 // ── 7. 세궁 도출 ──────────────────────────────────
+// [FIX 6] 일간(日干) 음양에 따라 세궁을 고정 매핑으로 결정.
+//         기존 코드는 동일 오행의 후보 궁 중 "지반수가 가장 큰 궁"을 세궁으로
+//         선택했으나, 이는 홍연기문 원칙과 다르다.
+//         정통 홍연기문: 양간(甲·丙·戊·庚·壬)은 양궁, 음간(乙·丁·己·辛·癸)은 음궁.
+//           甲→진궁(3), 乙→손궁(4)
+//           丙→이궁(9), 丁→이궁(9)   ← 火는 궁이 1개이므로 동일
+//           戊→간궁(8), 己→곤궁(2)
+//           庚→건궁(6), 辛→태궁(7)
+//           壬→감궁(1), 癸→감궁(1)   ← 水는 궁이 1개이므로 동일
+//         이 오류로 인해 세궁이 틀리면 팔문 배치 전체가 연쇄적으로 틀어져
+//         길방·흉방이 역전되는 현상이 발생한다(가족 비교 불일치의 근본 원인).
 function getSegung(dayGan, jibanBoard) {
   if (!dayGan || !CHEONGAN[dayGan]) return 5;
 
-  const ohaengToGung = {
-    목: [3, 4], 화: [9], 토: [2, 5, 8], 금: [6, 7], 수: [1],
+  // 일간 → 세궁 번호 고정 매핑 (홍연기문 음양궁 원칙)
+  const GAN_TO_SEGUNG = {
+    갑: 3, 을: 4,   // 木 양→진궁(震), 음→손궁(巽)
+    병: 9, 정: 9,   // 火 단일→이궁(離)
+    무: 8, 기: 2,   // 土 양→간궁(艮), 음→곤궁(坤)
+    경: 6, 신: 7,   // 金 양→건궁(乾), 음→태궁(兌)
+    임: 1, 계: 1,   // 水 단일→감궁(坎)
   };
-  const candidates = ohaengToGung[CHEONGAN[dayGan].ohaeng] || [5];
 
-  let segung = candidates[0], maxVal = 0;
-  for (const g of candidates) {
-    if (jibanBoard[g] > maxVal) { maxVal = jibanBoard[g]; segung = g; }
-  }
-  return segung;
+  return GAN_TO_SEGUNG[dayGan] ?? 5;
 }
 
 
@@ -644,24 +655,16 @@ function runHongyeon(rawInput) {
 //         길방 TOP3에 오르지 않도록 필터링.
 //         (tier 필드는 data-gugung.js PALMUN에 추가됨)
 //
-// [BUG FIX] segungIndex 인자가 함수 내부에서 실제로 사용되지 않는 문제 수정.
-//           board의 각 궁에 이미 isSegung 플래그가 설정되어 있으므로
-//           해당 플래그를 직접 사용하며, segungIndex 인자는 호환성을 위해 유지.
-//
 // 점수 구조 (수정 후):
 //   combined = relationScore(0~90) * 0.45
 //            + palmunScore(0~95)   * 0.45
 //            + sinsalPenalty(-30~0) * 1.0   ← 패널티 실질 반영
 //   → 최대 약 83점 / 신살 1개 시 최대 -30점 감점
-function deriveGiljung(board, segungIndex) {  // segungIndex: 호환성 유지, 내부에서 board.isSegung 사용
+function deriveGiljung(board, segungIndex) {
   const scored = Object.values(board).map(g => {
     const relationScore = g.relation.score;
     const palmunScore   = g.palmun?.score ?? 55;
-    // [BUG FIX] 기본값을 "흉"→"중"으로 수정.
-    // 이전에는 PALMUN에 복위(伏位)가 없어 palmun이 undefined인 궁의 tier가
-    // "흉"으로 처리되어 해당 궁이 길방 후보에서 부당하게 제외되었음.
-    // data-gugung.js에 복위를 추가했으므로 정상 동작하지만, 방어적으로 "중"을 유지.
-    const palmunTier    = g.palmun?.tier  ?? "중";
+    const palmunTier    = g.palmun?.tier  ?? "흉";   // tier 없으면 흉으로 보수적 처리
     // 신살 패널티: score가 음수(-25 ~ -30)이므로 * 1.0으로 실질 반영
     const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
     const combined = Math.max(
@@ -689,16 +692,14 @@ function deriveGiljung(board, segungIndex) {  // segungIndex: 호환성 유지, 
   const others = scored.filter(g => !g.isSegung);
   others.sort((a, b) => b.combined - a.combined);
 
-  // [FIX 4] 팔문 tier "길"·"중"인 궁만 길방 후보로 허용
+  // [FIX 4] 팔문 tier "길"인 궁만 길방 후보로 허용
   //         → 유혼(遊魂) 이하 흉문이 길방에 오르는 모순 방지
   // [FIX 4-b] 세궁이 생기·복덕·천의 중 하나를 차지해 길방 후보가 2개 이하로 줄어도
-  //           유혼·화해가 앞에 오지 않도록 tier "길"·"중" 우선, 부족분만 흉문 상위로 보충
-  // [BUG FIX] 복위(tier:"중")가 이전에는 tier "흉" 기본값으로 처리되어 길방 보충 후보에서
-  //           제외되었음. "중" tier를 길방 보충 후보에 포함하도록 수정.
-  const gilTier   = others.filter(g => g.palmunTier === "길" || g.palmunTier === "중");
-  const hyungTier = others.filter(g => g.palmunTier === "흉");
+  //           유혼·화해가 앞에 오지 않도록 tier "길" 우선, 부족분만 흉문 상위로 보충
+  const gilTier   = others.filter(g => g.palmunTier === "길");
+  const hyungTier = others.filter(g => g.palmunTier !== "길");
 
-  // 길방: tier "길"·"중" 우선 채우고 부족하면 tier "흉" 상위 점수로 보충
+  // 길방: tier "길" 우선 채우고 부족하면 tier "흉" 상위 점수로 보충
   const gilbang = [
     ...gilTier.slice(0, 3),
     ...hyungTier.slice(0, Math.max(0, 3 - gilTier.length)),
