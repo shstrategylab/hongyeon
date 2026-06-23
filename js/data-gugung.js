@@ -237,6 +237,41 @@ function getSinsalForGung(cheonbanNum, jibanNum) {
   return active; // 복수 발동 가능
 }
 
+// ── 홍국수(洪局數) 육친(六親) 배속 ─────────────────
+// 정통 홍연기문의 핵심: 일간(日干) 오행을 기준으로, 각 궁에 앉은
+// 지반/천반 홍국수(1~9)의 오행이 일간과 어떤 생극 관계인지 따져
+// 비겁·식상·재성·관성·인성 다섯 갈래로 분류한다.
+// (자평명리 육친 산출법과 동일한 원리 — "나(일간)"를 기준점으로 삼음)
+const YUKCHIN_LABEL = {
+  비겁: "비겁(比劫)",   // 일간과 같은 오행 — 나 자신·형제·동료·경쟁
+  식상: "식상(食傷)",   // 일간이 생(生)하는 오행 — 활동·표현·자식·소비
+  재성: "재성(財星)",   // 일간이 극(剋)하는 오행 — 재물·결과물·배우자(남)
+  관성: "관성(官星)",   // 일간을 극(剋)하는 오행 — 직위·명예·통제·배우자(여)
+  인성: "인성(印星)",   // 일간을 생(生)하는 오행 — 문서·학문·도움·부모
+};
+
+// ilganOhaeng: 일간의 오행("목"·"화"·"토"·"금"·"수")
+// targetOhaeng: 비교 대상(홍국수)의 오행
+// 반환: YUKCHIN_LABEL의 값 중 하나, 또는 판별 불가 시 null
+function getYukchin(ilganOhaeng, targetOhaeng) {
+  if (!ilganOhaeng || !targetOhaeng) return null;
+  if (ilganOhaeng === targetOhaeng) return YUKCHIN_LABEL.비겁;
+  if (OHAENG_RULE.생[ilganOhaeng] === targetOhaeng) return YUKCHIN_LABEL.식상; // 내가 생함
+  if (OHAENG_RULE.생[targetOhaeng] === ilganOhaeng) return YUKCHIN_LABEL.인성; // 나를 생함
+  if (OHAENG_RULE.극[ilganOhaeng] === targetOhaeng) return YUKCHIN_LABEL.재성; // 내가 극함
+  if (OHAENG_RULE.극[targetOhaeng] === ilganOhaeng) return YUKCHIN_LABEL.관성; // 나를 극함
+  return null;
+}
+
+// 육친별 한 줄 의미 + 길흉 시 주의점 (해석 텍스트용)
+const YUKCHIN_MEANING = {
+  "비겁(比劫)": { keyword: "자립·경쟁·협업", desc: "스스로의 힘, 동료·형제·경쟁자와 관련된 기운입니다. 이 방위는 협업이나 동업, 경쟁 구도와 관련된 일에 영향을 줍니다." },
+  "식상(食傷)": { keyword: "활동·표현·소비", desc: "내가 밖으로 펼치는 활동력과 표현력, 자식·아랫사람과 관련된 기운입니다. 이 방위는 사업 확장, 표현, 지출과 관련된 일에 영향을 줍니다." },
+  "재성(財星)": { keyword: "재물·결과물", desc: "내가 직접 다루고 통제하는 재물·자원과 관련된 기운입니다. 이 방위는 돈, 재산, 거래와 관련된 일에 영향을 줍니다." },
+  "관성(官星)": { keyword: "직위·명예·통제", desc: "나를 통제하거나 사회적 지위·명예를 부여하는 기운입니다. 이 방위는 직장, 승진, 시험, 법적 권위와 관련된 일에 영향을 줍니다." },
+  "인성(印星)": { keyword: "문서·학문·후원", desc: "나를 돕고 길러주는 문서·학문·윗사람의 후원과 관련된 기운입니다. 이 방위는 계약, 공부, 인허가, 윗사람의 도움과 관련된 일에 영향을 줍니다." },
+};
+
 // ── 팔문 배속 함수 ────────────────────────────────
 // 세궁(世宮)을 기준으로 낙서 순방향에 팔문 8개 배속
 // 나머지 1궁 = 복위(안정·중립)
