@@ -295,8 +295,8 @@
       <div class="meta-tag" title="24절기 중 이 명식의 시간적 기준이 되는 절기입니다.">절기: <span id="jeolgiName">-</span></div>
       <div class="meta-tag" title="양둔(陽遁)·음둔(陰遁) — 절기에 따라 숫자가 도는 방향(순행/역행)을 정합니다.">구분: <span id="dunType">-</span></div>
       <div class="meta-tag" title="局數 — 구궁판에 숫자를 배치하는 시작 기준점(1~9국)입니다.">국수: <span id="baseGuksu">-</span>국</div>
-      <div class="meta-tag" title="地盤數 — 바뀌지 않는 바닥 자리의 기준수입니다.">지반수: <span id="jibansu">-</span></div>
-      <div class="meta-tag" title="天盤數 — 사주의 기운(홍국수)에 따라 움직여 올라앉은 수로, 실제 길흉 해석의 핵심입니다.">천반수: <span id="cheonbansu">-</span></div>
+      <div class="meta-tag" title="地盤洪局數 — 사주 선천수 합으로 정해진, 9궁 전체에 순서대로 깔리는 바닥 기준수(홍국수)입니다.">홍국수(지반): <span id="jibansu">-</span></div>
+      <div class="meta-tag" title="天盤洪局數 — 사주의 기운(홍국수)에 따라 움직여 올라앉은 수로, 실제 길흉 해석의 핵심입니다.">홍국수(천반): <span id="cheonbansu">-</span></div>
     </div>
 
     <!-- 경고 메시지 -->
@@ -373,6 +373,10 @@
           <span>팔문</span>
           <span id="detailPalmun" style="text-align:right; max-width:70%; font-size:13px;">-</span>
         </div>
+        <div class="gung-detail-row" id="detailYukchinRow">
+          <span>홍국수 육친</span>
+          <span id="detailYukchin" style="text-align:right; max-width:70%; font-size:13px;">-</span>
+        </div>
         <!-- ① 종합 멘트 (점수 구간 기반) -->
         <div class="detail-gung-life mt-8" id="detailDesc">-</div>
         <!-- ② 궁 고유 해설 -->
@@ -386,6 +390,15 @@
           <div id="detailSinsalList"></div>
         </div>
       </div>
+    </div>
+
+    <!-- 홍국수 육친(六親) 종합표 -->
+    <div class="card" id="yukchinCard">
+      <div class="card-title">
+        🧬 홍국수 육친(六親) 종합표
+        <span style="font-size:11px; color:var(--text-dim); font-weight:400;">— 일간 기준, 재성·관성이 어디 있는지</span>
+      </div>
+      <div id="yukchinList"></div>
     </div>
 
     <!-- 길흉 요약 -->
@@ -573,6 +586,48 @@
       card.style.display = "block";
     }
 
+    // 홍국수 육친 종합표 렌더링 — "재성/관성/인성이 어디 있는가"
+    // analysis.yukchinMap: { "비겁(比劫)": [...], "식상(食傷)": [...], ... } (engine.js v2.5+)
+    const YUKCHIN_ICON = {
+      "비겁(比劫)": "🤝", "식상(食傷)": "🌊", "재성(財星)": "💰",
+      "관성(官星)": "🏛️", "인성(印星)": "📜",
+    };
+    function renderYukchinSummary(r) {
+      const wrap = document.getElementById("yukchinList");
+      const yukchinMap = r.analysis?.yukchinMap;
+
+      // 일간을 몰라 육친을 산출하지 못한 경우(절기 근사 포국 등)
+      if (!yukchinMap || !r.analysis?.dayGanOhaeng) {
+        wrap.innerHTML = `<p style="font-size:12px; color:var(--text-dim); line-height:1.8;">
+          일간(日干) 정보가 없어 홍국수 육친을 산출할 수 없습니다. 사주팔자(일주)를 입력하면
+          재성·관성·인성이 어느 방위에 있는지 보여드립니다.</p>`;
+        return;
+      }
+
+      const order = ["비겁(比劫)", "식상(食傷)", "재성(財星)", "관성(官星)", "인성(印星)"];
+      wrap.innerHTML = order.map(label => {
+        const list = yukchinMap[label] || [];
+        const icon = YUKCHIN_ICON[label] || "•";
+        const meaning = (typeof YUKCHIN_MEANING === "object" && YUKCHIN_MEANING[label])
+          ? YUKCHIN_MEANING[label].desc : "";
+        const itemsHtml = list.length
+          ? list.map(it => `
+              <span class="input-info-tag" style="margin:2px;">
+                ${it.gung}(${it.direction}) ${it.layer}${it.num}${it.isSegung ? " ★세궁" : ""}
+              </span>`).join("")
+          : `<span style="font-size:12px; color:var(--text-dim);">해당 없음</span>`;
+        return `
+          <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+              <span style="font-size:14px;">${icon}</span>
+              <strong style="font-size:13px; color:var(--text-main);">${label}</strong>
+            </div>
+            ${meaning ? `<div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">${meaning}</div>` : ""}
+            <div>${itemsHtml}</div>
+          </div>`;
+      }).join("");
+    }
+
     if (!result) {
       alert("입력 데이터가 없습니다. 처음부터 시작해주세요.");
       window.location.href = "index.html";
@@ -681,6 +736,9 @@
 
       // 구궁도 그리드 렌더링 (전역 함수)
       renderGrid();
+
+      // 홍국수 육친 종합표 렌더링
+      renderYukchinSummary(r);
 
 
 
@@ -797,6 +855,20 @@
           `<span style="color:var(--text-muted);"> — ${pmInfo2.desc}</span>`;
       } else {
         pmRowEl.style.display = "none";
+      }
+
+      // 홍국수 육친 행
+      const ycRowEl = document.getElementById("detailYukchinRow");
+      const ycValEl = document.getElementById("detailYukchin");
+      const hg = g.hongguksu;
+      if (hg && (hg.jibanYukchin || hg.cheonYukchin)) {
+        ycRowEl.style.display = "";
+        ycValEl.innerHTML =
+          `지반 <strong style="color:var(--gold);">${hg.jibanYukchin || "-"}</strong>` +
+          ` · 천반 <strong style="color:var(--gold);">${hg.cheonYukchin || "-"}</strong>`;
+      } else {
+        ycRowEl.style.display = "";
+        ycValEl.innerHTML = `<span style="color:var(--text-dim);">일간 미상 — 산출 불가</span>`;
       }
 
       // ① 종합 멘트 (점수 구간 기반)
