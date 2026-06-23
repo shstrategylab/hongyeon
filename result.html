@@ -770,65 +770,96 @@
 
 
 
-      // 길흉 요약 — 결합 점수(생극 45% + 팔문 45% + 신살 10%) 기준 정렬
+      // [BUG FIX] 길흉 요약 렌더링 전면 수정
+      // 기존: 9궁 전체를 combined 점수 순으로 단순 정렬 → 세궁이 순위에 포함되고,
+      //       생기(tier:"길")가 천극지로 combined 낮으면 흉방으로 표시되는 모순 발생.
+      // 수정: deriveGiljung의 gilbang/hyungbang을 직접 사용.
+      //       세궁 제외, 길방 TOP3 → 나머지(중간) → 흉방 TOP3 순으로 섹션 구분 표시.
       const giljung = r.giljung || deriveGiljung(board, analysis.segungIndex);
+
+      // combinedMap: showDetail·renderGrid에서도 참조하므로 계속 채움
       combinedMap = {};
-      [...giljung.gilbang, ...giljung.hyungbang, giljung.segung]
+      [...giljung.gilbang, ...giljung.hyungbang, ...(giljung.segung ? [giljung.segung] : [])]
         .filter(Boolean)
         .forEach(item => { combinedMap[item.gungNum] = item.combined; });
-
-      // combinedMap에 없는 궁(세궁 제외 외 나머지)도 보완 계산
+      // combinedMap에 없는 궁(길/흉 TOP3에 들지 못한 중간 궁들) 보완
       Object.values(board).forEach(g => {
         if (combinedMap[g.gungNum] === undefined) {
-          const relationScore = g.relation.score;
-          const palmunScore   = g.palmun?.score ?? 55;
-          const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
-          combinedMap[g.gungNum] = Math.max(0, Math.round(relationScore * 0.45 + palmunScore * 0.45 + sinsalPenalty * 1.0));
+          const rs = g.relation.score;
+          const ps = g.palmun?.score ?? 55;
+          const sp = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
+          combinedMap[g.gungNum] = Math.max(0, Math.round(rs * 0.45 + ps * 0.45 + sp * 1.0));
         }
       });
 
-      const sorted = Object.values(board)
-        .map(g => ({ g, combined: combinedMap[g.gungNum] }))
-        .sort((a, b) => b.combined - a.combined);
+      // 길방/흉방에 속하지 않는 중간 궁(세궁 제외)
+      const gilNums   = new Set(giljung.gilbang.map(g => g.gungNum));
+      const hyungNums = new Set(giljung.hyungbang.map(g => g.gungNum));
+      const middleItems = Object.values(board)
+        .filter(g => !g.isSegung && !gilNums.has(g.gungNum) && !hyungNums.has(g.gungNum))
+        .sort((a, b) => (combinedMap[b.gungNum] ?? 0) - (combinedMap[a.gungNum] ?? 0));
 
-      const list = document.getElementById("summaryList");
-      list.innerHTML = "";
-      sorted.forEach(({ g, combined }, i) => {
-        const badge   = combinedBadge(combined);
-        const comment = combinedComment(combined, g.gungInfo.name);
-
-        // [BUG FIX 1] g.palmun.desc 직접 참조 대신 palmunBoard → PALMUN 마스터 객체를 재조회
-        // 기존: g.palmun.desc → engine이 넘겨준 객체를 그대로 써서 relation.desc가 덮어쓰는 문제 발생
-        // 수정: palmunBoard[gungNum] 키로 PALMUN 전역 객체를 직접 조회하여 팔문 고유 텍스트 보장
-        const pmKeyForList  = palmunBoard[g.gungNum] || "";
-        const pmInfoForList = pmKeyForList ? (PALMUN[pmKeyForList] || null) : null;
-
+      // 렌더링 헬퍼
+      function makeSummaryLi(gungData, rank, sectionClass) {
+        const g = board[gungData.gungNum] || gungData;
+        const combined = combinedMap[g.gungNum] ?? gungData.combined ?? 0;
+        const badge    = combinedBadge(combined);
+        const pmKey    = palmunBoard[g.gungNum] || "";
+        const pmInfo   = pmKey ? (PALMUN[pmKey] || null) : null;
         const li = document.createElement("li");
+        if (sectionClass) li.classList.add(sectionClass);
         li.innerHTML = `
-          <span class="summary-rank">${i + 1}</span>
+          <span class="summary-rank">${rank}</span>
           <div class="summary-item-body">
             <div class="summary-item-header">
               <span class="summary-item-name">${g.gungInfo.name}</span>
               <span class="summary-item-dir">${g.gungInfo.direction}</span>
               <span class="score-badge badge-${badge}" style="position:static;">${badge} ${combined}점</span>
-              ${pmInfoForList ? `<span class="palmun-badge" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(180,140,80,0.1); color:var(--gold); border:1px solid var(--border);">${pmInfoForList.label}</span>` : ""}
+              ${pmInfo ? `<span class="palmun-badge" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(180,140,80,0.1); color:var(--gold); border:1px solid var(--border);">${pmInfo.label}</span>` : ""}
             </div>
-            <div class="summary-item-desc">${comment}</div>
-            ${pmInfoForList ? `<div class="summary-item-desc" style="color:var(--text-muted); font-size:12px; margin-top:4px;">📌 <strong>${pmInfoForList.label} 작용:</strong> ${pmInfoForList.desc}</div>` : ""}
+            ${pmInfo ? `<div class="summary-item-desc" style="color:var(--text-muted); font-size:12px; margin-top:4px;">📌 <strong>${pmInfo.label} 작용:</strong> ${pmInfo.desc}</div>` : ""}
             <div class="summary-item-desc" style="color:var(--text-dim); font-size:12px; margin-top:2px;">📐 <strong>${g.relation.label}:</strong> ${g.relation.desc}</div>
-            ${g.relation.detail ? `
-            <div class="summary-item-detail">
-              <span>${g.relation.detail}</span>
-            </div>` : ""}
+            ${g.relation.detail ? `<div class="summary-item-detail"><span>${g.relation.detail}</span></div>` : ""}
             ${(g.sinsal && g.sinsal.length > 0) ? `
-            <div class="summary-item-detail" style="border-left-color: rgba(200,60,40,0.4); background: rgba(180,50,30,0.06);">
+            <div class="summary-item-detail" style="border-left-color:rgba(200,60,40,0.4); background:rgba(180,50,30,0.06);">
               <span class="summary-item-detail-arrow" style="color:#e07060;">⚡</span>
               <span style="color:#c87060;">${g.sinsal.map(s => s.label).join(", ")} 발동 — ${g.sinsal.map(s => s.desc).join(" ")}</span>
             </div>` : ""}
           </div>
         `;
-        list.appendChild(li);
-      });
+        return li;
+      }
+
+      function makeSectionHeader(text, color) {
+        const li = document.createElement("li");
+        li.style.cssText = `list-style:none; padding:6px 4px 4px; font-size:11px; font-weight:600; letter-spacing:0.08em; color:${color}; border-bottom:1px solid rgba(255,255,255,0.06); margin-top:4px;`;
+        li.textContent = text;
+        return li;
+      }
+
+      const list = document.getElementById("summaryList");
+      list.innerHTML = "";
+
+      // ① 길방 TOP3
+      if (giljung.gilbang.length > 0) {
+        list.appendChild(makeSectionHeader("✦ 길방 TOP3", "var(--gold)"));
+        giljung.gilbang.forEach((item, i) => list.appendChild(makeSummaryLi(item, i + 1, "")));
+      }
+
+      // ② 중간 궁 (길/흉 외 나머지, 세궁 제외)
+      if (middleItems.length > 0) {
+        list.appendChild(makeSectionHeader("— 그 외 방위", "var(--text-dim)"));
+        middleItems.forEach((g, i) => {
+          const combined = combinedMap[g.gungNum] ?? 0;
+          list.appendChild(makeSummaryLi({ gungNum: g.gungNum, combined }, i + 1, ""));
+        });
+      }
+
+      // ③ 흉방 TOP3
+      if (giljung.hyungbang.length > 0) {
+        list.appendChild(makeSectionHeader("✕ 주의 방위 TOP3", "#e07060"));
+        giljung.hyungbang.forEach((item, i) => list.appendChild(makeSummaryLi(item, i + 1, "")));
+      }
     }
 
     // ── 궁별 고유 해설 ─────────────────────────────────────────
