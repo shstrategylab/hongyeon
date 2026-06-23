@@ -282,16 +282,21 @@ const YUKCHIN_MEANING = {
 const PALMUN_ORDER = ["생기","복덕","천의","유혼","화해","귀혼","절체","절명"];
 
 function buildPalmunBoard(segungIndex) {
+  // [BUG FIX] 기존 코드는 세궁 위치(startIdx)부터 팔문을 배치해
+  //           세궁 자신이 "생기"를 받고, 8번째 다음 궁이 "복위"가 되는 오류 발생.
+  //           홍연기문 원칙: 세궁(世宮) 자신은 항상 복위(伏位).
+  //           팔문 8개는 세궁 다음 궁부터 낙서 순방향으로 배속.
   const startIdx = NAKSEO_PATH.indexOf(segungIndex);
   const palmunBoard = {};
 
+  // 세궁 자신 = 복위
+  palmunBoard[segungIndex] = "복위";
+
+  // 세궁 다음 궁부터 순방향으로 팔문 8개 배속
   for (let i = 0; i < 8; i++) {
-    const gungNum = NAKSEO_PATH[(startIdx + i) % 9];
+    const gungNum = NAKSEO_PATH[(startIdx + 1 + i) % 9];
     palmunBoard[gungNum] = PALMUN_ORDER[i];
   }
-  // 8문 배속 후 남는 1궁 = 복위
-  const lastGung = NAKSEO_PATH[(startIdx + 8) % 9];
-  palmunBoard[lastGung] = "복위";
 
   return palmunBoard;
 }
