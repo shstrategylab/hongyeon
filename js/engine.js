@@ -664,7 +664,7 @@ function deriveGiljung(board, segungIndex) {
   const scored = Object.values(board).map(g => {
     const relationScore = g.relation.score;
     const palmunScore   = g.palmun?.score ?? 55;
-    const palmunTier    = g.palmun?.tier  ?? "흉";   // tier 없으면 흉으로 보수적 처리
+    const palmunTier    = g.palmun?.tier  ?? "중";   // [BUG FIX] 기본값 "흉"→"중": 복위 미정의 시 길방 후보 부당 제외 방지
     // 신살 패널티: score가 음수(-25 ~ -30)이므로 * 1.0으로 실질 반영
     const sinsalPenalty = (g.sinsal || []).reduce((acc, s) => acc + (s.score || 0), 0);
     const combined = Math.max(
@@ -696,8 +696,9 @@ function deriveGiljung(board, segungIndex) {
   //         → 유혼(遊魂) 이하 흉문이 길방에 오르는 모순 방지
   // [FIX 4-b] 세궁이 생기·복덕·천의 중 하나를 차지해 길방 후보가 2개 이하로 줄어도
   //           유혼·화해가 앞에 오지 않도록 tier "길" 우선, 부족분만 흉문 상위로 보충
-  const gilTier   = others.filter(g => g.palmunTier === "길");
-  const hyungTier = others.filter(g => g.palmunTier !== "길");
+  // [BUG FIX] tier "중"(복위)도 길방 보충 후보에 포함. 기존엔 "길"만 허용해 복위가 흉 취급됐음.
+  const gilTier   = others.filter(g => g.palmunTier === "길" || g.palmunTier === "중");
+  const hyungTier = others.filter(g => g.palmunTier === "흉");
 
   // 길방: tier "길" 우선 채우고 부족하면 tier "흉" 상위 점수로 보충
   const gilbang = [
