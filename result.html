@@ -594,13 +594,40 @@
     };
     function renderYukchinSummary(r) {
       const wrap = document.getElementById("yukchinList");
-      const yukchinMap = r.analysis?.yukchinMap;
 
-      // 일간을 몰라 육친을 산출하지 못한 경우(절기 근사 포국 등)
-      if (!yukchinMap || !r.analysis?.dayGanOhaeng) {
+      // ① 일간 오행이 없으면 육친 산출 자체가 불가
+      if (!r.analysis?.dayGanOhaeng) {
         wrap.innerHTML = `<p style="font-size:12px; color:var(--text-dim); line-height:1.8;">
           일간(日干) 정보가 없어 홍국수 육친을 산출할 수 없습니다. 사주팔자(일주)를 입력하면
           재성·관성·인성이 어느 방위에 있는지 보여드립니다.</p>`;
+        return;
+      }
+
+      // ② yukchinMap이 sessionStorage 직렬화·복원 과정에서 누락될 수 있으므로
+      //    없으면 현재 board에서 직접 재계산한다 (engine.js의 summarizeYukchin 재사용)
+      let yukchinMap = r.analysis?.yukchinMap;
+      if (!yukchinMap && typeof summarizeYukchin === "function" && r.board) {
+        yukchinMap = summarizeYukchin(r.board);
+      }
+
+      // ③ 그래도 없으면 board의 hongguksu 데이터로 직접 집계 (최후 폴백)
+      if (!yukchinMap && r.board) {
+        const groups = {
+          "비겁(比劫)": [], "식상(食傷)": [], "재성(財星)": [], "관성(官星)": [], "인성(印星)": [],
+        };
+        for (const g of Object.values(r.board)) {
+          const h = g.hongguksu;
+          if (!h) continue;
+          if (h.jibanYukchin  && groups[h.jibanYukchin])
+            groups[h.jibanYukchin].push({ gung: g.gungInfo.name, direction: g.gungInfo.direction, layer: "지반", num: g.jibansu, isSegung: g.isSegung });
+          if (h.cheonYukchin && groups[h.cheonYukchin])
+            groups[h.cheonYukchin].push({ gung: g.gungInfo.name, direction: g.gungInfo.direction, layer: "천반", num: g.cheonbansu, isSegung: g.isSegung });
+        }
+        yukchinMap = groups;
+      }
+
+      if (!yukchinMap) {
+        wrap.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">육친 데이터를 불러올 수 없습니다.</p>`;
         return;
       }
 
