@@ -489,11 +489,11 @@
           const jDesc = jibO ? relWord(ilOhaeng, jibO) : "";
           const cDesc = cheO ? relWord(ilOhaeng, cheO) : "";
           if (!jDesc && !cDesc) return "";
-          return \`<div class="rel-box" style="margin-top:10px;">
+          return `<div class="rel-box" style="margin-top:10px;">
             <strong style="font-size:12px; color:var(--gold);">일간(${ilOhaeng}) 기준 세궁 에너지</strong><br>
-            ${jDesc ? \`지반 ${segung.jibansu}(${jibO}): ${jDesc}<br>\` : ""}
-            ${cDesc ? \`천반 ${segung.cheonbansu}(${cheO}): ${cDesc}\` : ""}
-          </div>\`;
+            ${jDesc ? `지반 ${segung.jibansu}(${jibO}): ${jDesc}<br>` : ""}
+            ${cDesc ? `천반 ${segung.cheonbansu}(${cheO}): ${cDesc}` : ""}
+          </div>`;
         })() : ""}
         ${segungSipsinHtml}
       `;
